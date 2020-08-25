@@ -85,7 +85,7 @@ inductive natural : Type
 | zero : natural
 | succ : natural → natural
 
-section natural
+namespace natural
 
 open natural
 
@@ -122,8 +122,10 @@ instance natural_has_add : has_add natural := ⟨add⟩
 
 
 -- And prove some standard additive properties
+@[simp, pattern]
 lemma zero_add_ (x : natural): 0 + x = x := by refl
 
+@[simp, pattern]
 lemma add_zero_ (x : natural): x + 0 = x :=
     natural.rec_on x (
         show (0 : natural) + 0 = 0, by refl
@@ -135,8 +137,10 @@ lemma add_zero_ (x : natural): x + 0 = x :=
             ...        = succ n         :by rw h
     )
 
+@[simp, pattern]
 lemma one_add (x : natural): 1 + x = succ x := by refl
 
+@[simp, pattern]
 lemma add_one (x : natural): x + 1 = succ x :=
     natural.rec_on x (
         show 0 + 1 = succ 0, by refl
@@ -148,6 +152,7 @@ lemma add_one (x : natural): x + 1 = succ x :=
             ...          = succ (succ n) : by rw h
     )
 
+@[simp]
 lemma add_asoc (x y z : natural): (x + y) + z = x + (y + z) :=
     natural.rec_on x (
         show ((0: natural) + y) + z = (0: natural) + (y + z), by refl
@@ -161,6 +166,7 @@ lemma add_asoc (x y z : natural): (x + y) + z = x + (y + z) :=
             ...                = (succ n) + (y + z)   : by refl
     )
 
+@[simp]
 lemma add_com (x y : natural): x + y = y + x :=
     natural.rec_on y (
         show x + 0 = 0 + x, by rwa [add_zero_, zero_add_]
@@ -177,6 +183,13 @@ lemma add_com (x y : natural): x + y = y + x :=
             ...        = (succ n) + x   : by rw add_one
     )
 
+@[simp]
+lemma add_rearrange (x y z : natural): (x + y) + z = (x + z) + y := (
+    calc
+        (x + y) + z = x + (y + z)   : by rw add_asoc
+        ...         = x + (z + y)   : by rw add_com y
+        ...         = (x + z) + y   : by rw add_asoc
+)
 
 
 
@@ -283,6 +296,94 @@ lemma mult_com (x y : natural): x * y = y * x :=
             ...          = y * (n + 1)         : by rw mult_dist_add
             ...          = y * (succ n)        : by rw add_one
     )
+
+-- equality is decidable
+lemma succ_ne_zero (n : natural): (succ n) ≠ 0 :=
+    assume h : succ n = 0,
+    natural.no_confusion h
+
+lemma zero_ne_succ (n : natural): 0 ≠ (succ n) :=
+    assume h :  0 = succ n,
+    natural.no_confusion h
+
+@[reducible]
+instance natural_decidable_eq: decidable_eq natural
+| 0        0        := is_true (by refl)
+| (succ x) 0        := is_false (succ_ne_zero x)
+| 0        (succ y) := is_false (zero_ne_succ y)
+| (succ x) (succ y) :=
+    match natural_decidable_eq x y with
+    | is_true hxeqy  := is_true (
+        calc
+            succ x = succ x  : by rw [eq.refl (succ x)]
+            ...    = succ y  : by rw [hxeqy]
+    )
+    | is_false hxney := is_false (
+        assume h: succ x = succ y,
+        have x = y, by injection h,
+        absurd ‹x = y› ‹x ≠ y›
+    )
+    end
+
+-- inequalities
+def le (x y : natural): Prop := ∃ z : natural, x + z = y
+instance natural_has_le: has_le natural := ⟨le⟩
+
+def lt (x y : natural): Prop := (x ≤ y) ∧ (x ≠ y)
+instance natural_has_lt: has_lt natural := ⟨lt⟩
+
+instance le_decidable: ∀ a b : natural, decidable (a ≤ b)
+| 0        0        := is_true ⟨0, by refl⟩
+| (succ x) 0        := is_false (
+    assume ⟨c, (h : succ x + c = 0)⟩,
+    have succ (x + c) = 0, from (
+        calc
+            succ (x + c) = (x + c) + 1  : by simp
+            ...          = (x + 1) + c  : by rw add_rearrange
+            ...          = (succ x) + c : by rw add_one
+            ...          = 0            : by rw h
+    ),
+    absurd ‹succ (x + c) = 0› (succ_ne_zero (x + c))
+)
+| 0        (succ y) := is_true ⟨(succ y), by refl⟩
+| (succ x) (succ y) :=
+    match le_decidable x y with
+        | is_true xley  := is_true (
+            let ⟨z, (h : x + z = y)⟩ := xley in (
+                ⟨z, calc
+                    (succ x) + z = (x + 1) + z  : by rw add_one
+                    ...          = x + z + 1    : by rw add_rearrange
+                    ...          = y + 1        : by rw h
+                    ...          = succ y       : by rw add_one
+                ⟩
+            )
+        )
+        | is_false xgty := is_false (
+            assume ⟨z, (h : succ x + z = succ y)⟩,
+            suffices x ≤ y, from absurd this xgty,
+            ⟨z, (
+                suffices succ (x + z) = succ y, by injection this,
+                calc
+                    succ (x + z) = (x + z) + 1  : by rw add_one
+                    ...          = (x + 1) + z  : by rw add_rearrange
+                    ...          = (succ x) + z : by rw add_one
+                    ...          = succ y       : by rw h
+            )⟩
+        )
+    end
+
+
+-- subtraction, of a sort
+def pred: natural → natural
+| 0        := 0
+| (succ a) := a
+
+def sub:  natural → natural → natural
+| 0 b        := 0
+| a 0        := a
+| a (succ b) := pred (sub a b)
+
+instance natural_has_sub: has_sub natural := ⟨sub⟩
 
 -- And essentially that's the natural numbers
 

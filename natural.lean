@@ -114,59 +114,52 @@ lemma zero_not_succ  (x : natural):  (succ x ≠ 0) :=
 
 
 -- Now we define addition
+-- I originally defined addition the other way round with the first
+-- parameter as 0 or succ a, but this is unfortunate. If you do it
+-- this way round then (a + 1) = a + succ 0 = succ a + 0 = succ a is
+-- definitional, and so can be used in unfolding future definitions
 def add : natural → natural → natural
-    | 0        := λ x, x
-    | (succ n) := λ x, succ (add n x)
+    | a  0        := a
+    | a  (succ b) := succ (add a b)
 
 instance natural_has_add : has_add natural := ⟨add⟩
 
-
 -- And prove some standard additive properties
-@[simp, pattern]
-lemma zero_add_ (x : natural): 0 + x = x := by refl
-
-@[simp, pattern]
-lemma add_zero_ (x : natural): x + 0 = x :=
+lemma zero_add_ (x : natural): 0 + x = x :=
     natural.rec_on x (
         show (0 : natural) + 0 = 0, by refl
     ) (
-        assume n : natural,
-        assume h : n + 0 = n,
+        assume n: natural,
+        assume h: 0 + n = n,
         calc
-            succ n + 0 = succ (n + 0)   :by refl
-            ...        = succ n         :by rw h
+            0 + succ n = succ (0 + n) : by refl
+            ...        = succ n       : by rw h
     )
+lemma add_zero_ (x : natural): x + 0 = x := by refl
 
-@[simp, pattern]
-lemma one_add (x : natural): 1 + x = succ x := by refl
-
-@[simp, pattern]
-lemma add_one (x : natural): x + 1 = succ x :=
+lemma one_add (x : natural): 1 + x = succ x :=
     natural.rec_on x (
-        show 0 + 1 = succ 0, by refl
+        show 1 + 0 = succ 0, by refl
     ) (
         assume n : natural,
-        assume h : n + 1 = succ n,
+        assume h : 1 + n = succ n,
         calc
-            (succ n) + 1 = succ (n + 1)  : by refl
+            1 + (succ n) = succ (1 + n)  : by refl
             ...          = succ (succ n) : by rw h
     )
+lemma add_one (x : natural): x + 1 = succ x := by refl
 
-@[simp]
 lemma add_asoc (x y z : natural): (x + y) + z = x + (y + z) :=
-    natural.rec_on x (
-        show ((0: natural) + y) + z = (0: natural) + (y + z), by refl
+    natural.rec_on z (
+        show (x + y) + 0 = x + (y + 0), by refl
     ) (
         assume n : natural,
-        assume h : (n + y) + z = n + (y + z),
+        assume h : (x + y) + n = x + (y + n),
         calc
-            ((succ n) + y) + z = succ (n + y) + z     : by refl
-            ...                = succ ((n + y) + z)   : by refl
-            ...                = succ (n + (y + z))   : by rw h
-            ...                = (succ n) + (y + z)   : by refl
+            (x + y) + succ n = succ ((x + y) + n)   : by refl
+            ...              = succ (x + (y + n))   : by rw h
+            ...              = x + succ (y + n)     : by refl
     )
-
-@[simp]
 lemma add_com (x y : natural): x + y = y + x :=
     natural.rec_on y (
         show x + 0 = 0 + x, by rwa [add_zero_, zero_add_]
@@ -195,193 +188,151 @@ lemma add_rearrange (x y z : natural): (x + y) + z = (x + z) + y := (
 
 -- Now define multiplication
 def mult : natural → natural → natural
-    | 0 := λ x, 0
-    | (succ n) := λ x, (mult n x) + x
+    | a 0       := 0
+    | a (b + 1) := a + (mult a b)
 
 instance natural_has_mult : has_mul natural := ⟨mult⟩
 
 
 -- And prove some useful results about multiplication
-lemma zero_mult (x : natural): 0 * x = 0 := by refl
+lemma mult_zero (x : natural): x * 0 = 0 := by refl
 
-lemma mult_zero (x : natural): x * 0 = 0 :=
+lemma zero_mult (x : natural): 0 * x = 0 :=
     natural.rec_on x (
         show (0 : natural) * 0 = 0, by refl
     ) (
         assume n : natural,
-        assume h : n * 0 = 0,
+        assume h : 0 * n = 0,
         calc
-            (succ n) * 0 = (n * 0) + 0   : by refl
-            ...          = (n * 0)       : by rw add_zero_
-            ...          = 0             : by rw h
+            0 * (n + 1) = 0 + 0 * n : by refl
+            ...         = 0 + 0     : by rw h
+            ...         = 0         : by refl
     )
 
-lemma one_mult (x : natural): 1 * x = x := by refl
 
-lemma mult_one (x : natural): x * 1 = x :=
+lemma mult_one (x : natural): x * 1 = x := by refl
+
+lemma one_mult (x : natural): 1 * x = x :=
     natural.rec_on x (
-        show (0 : natural) * 1 = 0, by refl
+        show (1 : natural) * 0 = 0, by refl
     ) (
         assume n : natural,
-        assume h : n * 1 = n,
+        assume h : 1 * n = n,
         calc
-            (succ n) * 1 = (n * 1) + 1   : by refl
-            ...          = n + 1         : by rw h
-            ...          = succ n        : by rw add_one
+            1 * (n + 1) = 1 + (1 * n)  : by refl
+            ...         = 1 + n        : by rw h
+            ...         = n + 1        : by rw add_com
     )
 
 lemma add_dist_mult (x y z : natural): (x + y) * z = (x * z) + (y * z) :=
-    natural.rec_on x (
-        show (0 + y) * z = (0 * z) + (y * z), by refl
+    natural.rec_on z (
+        show (x + y) * 0 = (x * 0) + (y * 0), by refl
     ) (
-        assume n : natural,
-        assume h : (n + y) * z = (n * z) + (y * z),
+        assume n: natural,
+        assume h: (x + y) * n = (x * n) + (y * n),
         calc
-            (succ n + y) * z = (succ (n + y)) * z         : by refl
-            ...              = ((n + y) * z) + z          : by refl
-            ...              = (n * z) + (y * z) + z      : by rw h
-            ...              = (n * z) + ((y * z) + z)    : by rw add_asoc
-            ...              = (n * z) + (z + (y * z))    : by rw [←add_com (y * z) z]
-            ...              = ((n * z) + z) + (y * z)    : by rw add_asoc
-            ...              = ((succ n) * z) + (y * z)   : by refl
+            (x + y) * (n + 1) = (x + y) + ((x + y) * n)        : by refl
+            ...               = (x + y) + ((x * n) + (y * n))  : by rw h
+            ...               = (x + (x * n)) + (y + (y * n))  : by rw [←add_asoc (x + y) (x * n), add_asoc x y, add_com y (x * n), ←add_asoc, add_asoc]
     )
 
 lemma mult_dist_add (x y z : natural): x * (y + z) = (x * y) + (x * z) :=
-    natural.rec_on x (
-        show 0 * (y + z) = (0 * y) + (0 * z), by refl
+    natural.rec_on z (
+        show x * (y + 0) = (x * y) + (x * 0), by refl
     ) (
-        assume n : natural,
-        assume h : n * (y + z) = (n * y) + (n * z),
+        assume n: natural,
+        assume h: x * (y + n) = (x * y) + (x * n),
         calc
-            (succ n) * (y + z) = (n * (y + z)) + (y + z)           : by refl
-            ...                = ((n * y) + (n * z)) + (y + z)     : by rw h
-            ...                = (n * y) + ((n * z) + (y + z))     : by rw add_asoc
-            ...                = (n * y) + (((n * z) + y) + z)     : by rw add_asoc
-            ...                = (n * y) + ((y + (n * z)) + z)     : by rw [add_com (n * z) y]
-            ...                = (n * y) + (y + ((n * z) + z))     : by rw add_asoc
-            ...                = ((n * y) + y) + ((n * z) + z)     : by rw add_asoc
-            ...                = ((succ n) * y) + ((succ n) * z)   : by refl
+            x * (y + (n + 1)) = x * ((y + n) + 1)        : by rw add_asoc
+            ...               = x + (x * (y + n))        : by refl
+            ...               = (x * y) + x + (x * n)    : by rw [h, ←add_asoc, add_com (x*y)]
+            ...               = (x * y) + (x + (x * n))  : by rw add_asoc
+            ...               = (x * y) + (x * (n + 1))  : by refl
     )
 
 lemma mult_asoc (x y z : natural): (x * y) * z = x * (y * z) :=
-    natural.rec_on x (
+    natural.rec_on z (
         calc
-            (0 * y) * z = 0 * z        : by rw zero_mult
-            ...         = 0            : by rw zero_mult
-            ...         = 0 * (y * z)  : by rw [zero_mult (y * z)]
+            (x * y) * 0 = x * (y * 0)  : by refl
     ) (
-        assume n : natural,
-        assume h : (n * y) * z = n * (y * z),
+        assume n: natural,
+        assume h: (x * y) * n = x * (y * n),
         calc
-            (succ n * y) * z = (n * y + y) * z           : by refl
-            ...              = ((n * y) * z) + (y * z)   : by rw add_dist_mult
-            ...              = n * (y * z) + (y * z)     : by rw h
-            ...              = (succ n) * (y * z)        : by refl
+            (x * y) * (n + 1) = (x * y) + ((x * y) * n)    : by refl
+            ...               = x * (y + (y * n))          : by rw [h, mult_dist_add]
+            ...               = x * (y * (n + 1))          : by refl
     )
 
 lemma mult_com (x y : natural): x * y = y * x :=
     natural.rec_on x (
-        calc
-            0 * y = 0       : by rw zero_mult
-            ...   = y * 0   : by rw mult_zero
+        show 0 * y = y * 0, by rw [zero_mult, mult_zero]
     ) (
         assume n : natural,
         assume h : n * y = y * n,
         calc
-            (succ n) * y = (n + 1) * y         : by rw add_one
-            ...          = (n * y) + (1 * y)   : by rw add_dist_mult
-            ...          = (n * y) + y         : by rw one_mult
-            ...          = (y * n) + y         : by rw h
-            ...          = (y * n) + (y * 1)   : by rw mult_one
-            ...          = y * (n + 1)         : by rw mult_dist_add
-            ...          = y * (succ n)        : by rw add_one
+            (n + 1) * y = (y * n) + (y * 1)   : by rw [add_dist_mult, one_mult, h, mult_one]
+            ...         = y * (n + 1)         : by rw mult_dist_add
     )
 
 -- equality is decidable
-lemma succ_ne_zero (n : natural): (succ n) ≠ 0 :=
+lemma succ_ne_zero (n : natural): (n + 1) ≠ 0 :=
     assume h : succ n = 0,
     natural.no_confusion h
 
-lemma zero_ne_succ (n : natural): 0 ≠ (succ n) :=
+lemma zero_ne_succ (n : natural): 0 ≠ (n + 1) :=
     assume h :  0 = succ n,
     natural.no_confusion h
 
 @[reducible]
 instance natural_decidable_eq: decidable_eq natural
-| 0        0        := is_true (by refl)
-| (succ x) 0        := is_false (succ_ne_zero x)
-| 0        (succ y) := is_false (zero_ne_succ y)
-| (succ x) (succ y) :=
+| 0       0       := is_true (by refl)
+| (x + 1) 0       := is_false (succ_ne_zero x)
+| 0       (y + 1) := is_false (zero_ne_succ y)
+| (x + 1) (y + 1) :=
     match natural_decidable_eq x y with
-    | is_true hxeqy  := is_true (
-        calc
-            succ x = succ x  : by rw [eq.refl (succ x)]
-            ...    = succ y  : by rw [hxeqy]
-    )
-    | is_false hxney := is_false (
-        assume h: succ x = succ y,
-        have x = y, by injection h,
-        absurd ‹x = y› ‹x ≠ y›
-    )
+    | is_true h  := is_true (by rw h)
+    | is_false _ := is_false (assume h: succ x = succ y, have x = y, by injection h, absurd ‹x = y› ‹x ≠ y›)
     end
 
 -- inequalities
-def le (x y : natural): Prop := ∃ z : natural, x + z = y
+def le (x y : natural): Prop := ∃ z : natural, z + x = y
 instance natural_has_le: has_le natural := ⟨le⟩
 
 def lt (x y : natural): Prop := (x ≤ y) ∧ (x ≠ y)
 instance natural_has_lt: has_lt natural := ⟨lt⟩
 
+lemma succ_le_succ {x y : natural}: x ≤ y → (x + 1) ≤ (y + 1) :=
+    assume ⟨z, (h: z + x = y)⟩,
+    suffices z + (x + 1) = y + 1, from ⟨z, this⟩,
+    show z + (x + 1) = y + 1, by rw [←add_asoc z x 1, h]
+
 instance le_decidable: ∀ a b : natural, decidable (a ≤ b)
-| 0        0        := is_true ⟨0, by refl⟩
-| (succ x) 0        := is_false (
-    assume ⟨c, (h : succ x + c = 0)⟩,
-    have succ (x + c) = 0, from (
-        calc
-            succ (x + c) = (x + c) + 1  : by simp
-            ...          = (x + 1) + c  : by rw add_rearrange
-            ...          = (succ x) + c : by rw add_one
-            ...          = 0            : by rw h
-    ),
-    absurd ‹succ (x + c) = 0› (succ_ne_zero (x + c))
+| 0       y        := is_true ⟨y, by refl⟩
+| (x + 1) 0        := is_false (
+    assume ⟨z, h⟩,
+    have (z + x) + 1 = 0, by rw [add_asoc, h],
+    have (z + x) + 1 ≠ 0, from succ_ne_zero (z + x),
+    absurd ‹(z + x) + 1 = 0› ‹(z + x) + 1 ≠ 0›
 )
-| 0        (succ y) := is_true ⟨(succ y), by refl⟩
-| (succ x) (succ y) :=
+|  (x+1) (y+1)    :=
     match le_decidable x y with
-        | is_true xley  := is_true (
-            let ⟨z, (h : x + z = y)⟩ := xley in (
-                ⟨z, calc
-                    (succ x) + z = (x + 1) + z  : by rw add_one
-                    ...          = x + z + 1    : by rw add_rearrange
-                    ...          = y + 1        : by rw h
-                    ...          = succ y       : by rw add_one
-                ⟩
-            )
-        )
+        | is_true xley := is_true (succ_le_succ xley)
         | is_false xgty := is_false (
-            assume ⟨z, (h : succ x + z = succ y)⟩,
-            suffices x ≤ y, from absurd this xgty,
-            ⟨z, (
-                suffices succ (x + z) = succ y, by injection this,
-                calc
-                    succ (x + z) = (x + z) + 1  : by rw add_one
-                    ...          = (x + 1) + z  : by rw add_rearrange
-                    ...          = (succ x) + z : by rw add_one
-                    ...          = succ y       : by rw h
-            )⟩
+            assume ⟨z, (h: z + x + 1 = y + 1)⟩,
+            have x ≤ y, from ⟨z, by injection h⟩,
+            absurd ‹x ≤ y› xgty
         )
     end
 
 
 -- subtraction, of a sort
 def pred: natural → natural
-| 0        := 0
-| (succ a) := a
+| 0       := 0
+| (a + 1) := a
 
 def sub:  natural → natural → natural
-| 0 b        := 0
-| a 0        := a
-| a (succ b) := pred (sub a b)
+| a 0       := a
+| a (b + 1) := pred (sub a b)
 
 instance natural_has_sub: has_sub natural := ⟨sub⟩
 

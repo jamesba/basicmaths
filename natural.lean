@@ -1021,6 +1021,21 @@ lemma sub_of_sub (x y z: natural): (x-y)-z = x-(y+z) :=
             ...             = x - (y+c+1)         : by refl
     )
 
+
+lemma mult_nz {x y: natural}: x≠0 → y≠0 → (x*y)≠0 :=
+    natural.rec_on y (
+        assume hx,
+        assume hy,
+        absurd (eq.refl 0) hy
+    ) (
+        assume b: natural,
+        assume hr: x ≠ 0 → b ≠ 0 → x * b ≠ 0,
+        assume hx: x ≠ 0,
+        assume hy: b+1 ≠ 0,
+        assume hc: x*(b+1) = 0,
+        absurd (zero_sum hc) hx
+    )
+
 -- And essentially that's the natural numbers
 
 end natural

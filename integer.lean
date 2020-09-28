@@ -823,4 +823,45 @@ calc
     ...            = (-[a+1] * y) * z                : by refl
 end
 
+lemma mult_zero (x:integer): x*0 = 0 :=
+match x with
+| from_natural a := by refl
+| -[a+1]         := by refl
+end
+
+lemma one_mult (x:integer): 1*x = x :=
+match x with
+| from_natural a := show from_natural (1*a) = from_natural a, by rw natural.one_mult
+| -[a+1]         := show -from_natural (1*(a+1)) = -from_natural(a+1), by rw natural.one_mult
+end
+
+lemma mult_one (x:integer): x*1 = x :=
+match x with
+| from_natural a := show from_natural (a*1) = from_natural a, by rw natural.mult_one
+| -[a+1]         := show -from_natural ((a+1)*1) = -from_natural(a+1), by rw natural.mult_one
+end
+
+lemma mult_minusone (x: integer): x*(-1) = -x := by rw [mult_int_neg, mult_one]
+
+-- divisibility
+
+def dvd (x y: integer):= ∃ z: integer, x*z = y
+instance integer_has_dvd: has_dvd integer := ⟨dvd⟩
+
+lemma dvd_zero (x: integer): x∣0 := ⟨0, by rw mult_zero⟩
+
+lemma one_dvd (x: integer): 1∣x := ⟨x, by rw one_mult⟩
+
+lemma dvd_refl (x: integer): x∣x := ⟨1, by rw mult_one⟩
+lemma dvd_antirefl (x: integer): x∣-x := ⟨-1, by rw mult_minusone⟩
+
+lemma dvd_neg (x y: integer): x∣y ↔ -x∣y :=
+    iff.intro (
+        assume ⟨z, (h: x*z=y)⟩,
+        ⟨-z, (eq.symm (h ▸ (mult_neg_neg x z)))⟩
+    ) (
+        assume ⟨z, (h: -x*z=y)⟩,
+        ⟨-z, show x * -z = y, by rw [mult_int_neg, ←mult_neg_int, h]⟩
+    )
+
 end integer

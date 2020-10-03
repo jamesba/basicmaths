@@ -1036,6 +1036,58 @@ lemma mult_nz {x y: natural}: x≠0 → y≠0 → (x*y)≠0 :=
         absurd (zero_sum hc) hx
     )
 
+lemma mult_nz_eq_z_imp_z {x y : natural}: x*y = 0 → y ≠ 0 → x = 0 :=
+    assume h: x*y = 0,
+    assume hy: y ≠ 0,
+    if hx: x = 0 then
+        hx
+    else
+        let ⟨a, hx⟩ := nz_implies_succ hx in (
+            let ⟨b, hy⟩ := nz_implies_succ hy in (
+                have h: (a+1)*(b+1) = 0, from hx ▸ hy ▸ h,
+                have h: (a+1) + ((a+1)*b) = 0, from h,
+                have h: ((a+1)*b + a) + 1 = 0, by rw [add_asoc, ←add_com (a+1), h],
+                natural.no_confusion h
+            )
+        )
+
+lemma mult_elim_right {x y z: natural}: y ≠ 0 → x*y = z*y → x = z :=
+    assume hy: y ≠ 0,
+    suffices ∀ w: natural, x*y = w*y → x = w, from this z,
+    natural.rec_on x (
+        assume w: natural,
+        assume h: 0*y = w*y,
+        have h: w*y = 0, by rw [←h, zero_mult],
+        eq.symm (mult_nz_eq_z_imp_z h hy)
+    ) (
+        assume a: natural,
+        assume hr: ∀ (w : natural), a * y = w * y → a = w,
+        assume v: natural,
+        assume h: (a+1)*y = v*y,
+        if hv: v=0 then
+            have h: (a+1)*y = 0*y, from hv ▸ h,
+            have h: (a+1)*y = 0, by rw [h, zero_mult],
+            have h: (a+1) = 0, from mult_nz_eq_z_imp_z h hy,
+            absurd h (succ_ne_zero a)
+        else
+            let ⟨b, hv⟩ := nz_implies_succ hv in (
+                have h: (a+1) * y = (b+1) * y, from hv ▸ h,
+                have h: y*(a+1) = y*(b+1), by rw [mult_com, h, mult_com],
+                have h: y + y*a = y + (y*b), from h,
+                have h: y*a = y*b, from add_cancel_left h,
+                have h: a*y = b*y, by rw [mult_com, h, mult_com],
+                have h: a = b, from hr b h,
+                show a+1 = v, by rw [h, hv]
+            )
+    )
+
+lemma ne_implies_lt_or_gt {x y: natural}: x ≠ y → x < y ∨ y < x :=
+    assume hnz: x ≠ y,
+    if hle: x ≤ y then
+        or.intro_left _ ⟨hle, hnz⟩
+    else
+        or.intro_right _ (iff.elim_left not_le hle)
+
 -- And essentially that's the natural numbers
 
 end natural

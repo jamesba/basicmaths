@@ -67,8 +67,35 @@ instance fraction_setoid: setoid fraction := ⟨equiv, equiv_equiv⟩
 def add (x y: fraction): fraction := ⟨((x.n * y.d) + (y.n * x.d)), (x.d*y.d), natural.mult_nz x.nz y.nz⟩
 instance fraction_has_add: has_add fraction  := ⟨add⟩
 
+lemma add_invariant (x₁ y₁ x₂ y₂: fraction): x₁ ≈ x₂ → y₁ ≈ y₂ → ⟦x₁+y₁⟧ = ⟦x₂+y₂⟧ :=
+    assume hx: x₁.n * x₂.d = x₂.n * x₁.d,
+    assume hy: y₁.n * y₂.d = y₂.n * y₁.d,
+    suffices (x₁+y₁).n * (x₂+y₂).d = (x₂+y₂).n * (x₁+y₁).d, from quotient.sound this,
+    calc
+        (x₁+y₁).n * (x₂+y₂).d = ((x₁.n * y₁.d) + (y₁.n * x₁.d)) * (x₂.d * y₂.d)            : by refl
+        ...                   = (x₁.n * y₁.d)*(x₂.d * y₂.d) + (y₁.n * x₁.d)*(x₂.d * y₂.d)  : by rw integer.add_mult
+        ...                   = (x₁.n * y₁.d)*(x₂.d * y₂.d) + (y₁.n * x₁.d)*(y₂.d * x₂.d)  : by rw integer.mul_com x₂.d
+        ...                   = ((x₁.n * y₁.d)*x₂.d)*y₂.d + ((y₁.n * x₁.d)*y₂.d)*x₂.d      : by rw [integer.mul_asoc, integer.mul_asoc]
+        ...                   = (x₁.n*(y₁.d*x₂.d))*y₂.d + (y₁.n*(x₁.d*y₂.d))*x₂.d          : by rw [integer.mul_asoc, integer.mul_asoc]
+        ...                   = (x₁.n*(x₂.d*y₁.d))*y₂.d + (y₁.n*(y₂.d*x₁.d))*x₂.d          : by rw [integer.mul_com (y₁.d), integer.mul_com (x₁.d)]
+        ...                   = (x₁.n*x₂.d)*(y₁.d*y₂.d) + (y₁.n*y₂.d)*(x₁.d*x₂.d)          : by rw [integer.mul_asoc, integer.mul_asoc, integer.mul_asoc, integer.mul_asoc]
+        ...                   = (x₂.n*x₁.d)*(y₁.d*y₂.d) + (y₂.n*y₁.d)*(x₁.d*x₂.d)          : by rw [hx, hy]
+        ...                   = (x₂.n*y₂.d)*(x₁.d*y₁.d) + (y₂.n*y₁.d)*(x₁.d*x₂.d)          : by rw [integer.mul_com y₁.d, integer.mul_asoc, ←integer.mul_asoc x₂.n, integer.mul_com x₁.d, integer.mul_asoc, ←integer.mul_asoc]
+        ...                   = (x₂.n*y₂.d)*(x₁.d*y₁.d) + (y₂.n*y₁.d)*(x₂.d*x₁.d)          : by rw [←integer.mul_com x₁.d]
+        ...                   = (x₂.n*y₂.d)*(x₁.d*y₁.d) + (y₂.n*x₂.d)*(x₁.d*y₁.d)          : by rw [integer.mul_asoc (y₂.n*y₁.d), ←integer.mul_asoc y₂.n, integer.mul_com y₁.d, integer.mul_asoc y₂.n, ←integer.mul_asoc (y₂.n*x₂.d), integer.mul_com y₁.d]
+        ...                   = ((x₂.n*y₂.d)+(y₂.n*x₂.d))*(x₁.d*y₁.d)                      : by rw integer.add_mult
+        ...                   = (x₂+y₂).n * (x₁+y₁).d                                      : by refl
+
 def neg (x: fraction): fraction := ⟨-x.n, x.d, x.nz⟩
 instance fraction_has_neg: has_neg fraction  := ⟨neg⟩
+
+lemma neg_invariant (x y: fraction): x ≈ y → ⟦-x⟧ = ⟦-y⟧ :=
+    assume h: x.n * y.d = y.n * x.d,
+    suffices -x.n * y.d = -y.n * x.d, from quotient.sound this,
+    calc
+        -x.n * y.d = -(x.n * y.d)  : by rw integer.neg_mult
+        ...        = -(y.n * x.d)  : by rw h
+        ...        = -y.n * x.d    : by rw integer.neg_mult
 
 def mult (x y: fraction): fraction := ⟨x.n * y.n, x.d * y.d, natural.mult_nz x.nz y.nz⟩
 instance fraction_has_mult: has_mul fraction := ⟨mult⟩
@@ -90,11 +117,19 @@ instance has_coe_integer_rational: has_coe integer rational := ⟨assume n: inte
 def zero : rational := ↑(0: natural)
 def one  : rational := ↑(1: natural)
 
-instance fraction_has_zero: has_zero rational := ⟨zero⟩
-instance fraction_has_one: has_one rational := ⟨one⟩
+instance rational_has_zero: has_zero rational := ⟨zero⟩
+instance rational_has_one: has_one rational := ⟨one⟩
 
 
 -- addition
+
+def add (x y: rational): rational := quotient.lift_on₂ x y (λ f g: fraction, ⟦f + g⟧) fraction.add_invariant
+instance rational_has_add: has_add rational := ⟨add⟩
+
+-- negation
+
+def neg (x :rational): rational := quotient.lift_on x (λ f:fraction, ⟦-f⟧) fraction.neg_invariant
+instance rational_has_neg: has_neg rational := ⟨neg⟩
 
 
 end rational

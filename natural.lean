@@ -663,6 +663,8 @@ lemma not_le {x y: natural}: ¬(x ≤ y) ↔ (y < x) :=
             ... = b+a+y   : by rw add_asoc b a y
     )
 
+lemma not_lt {x y: natural}: ¬(x < y) ↔ (y ≤ x) := iff.trans (iff.symm (not_congr (@not_le y x))) (decidable.not_not_iff (y ≤ x))
+
 lemma succ_le_implies_lt {x y: natural}:  (x+1) ≤ y → x < y :=
     assume ⟨z, (h: z + (x+1) = y)⟩,
     have (z + 1) + x = y, by rw [add_asoc z, add_com 1, h],
@@ -1087,6 +1089,119 @@ lemma ne_implies_lt_or_gt {x y: natural}: x ≠ y → x < y ∨ y < x :=
         or.intro_left _ ⟨hle, hnz⟩
     else
         or.intro_right _ (iff.elim_left not_le hle)
+
+lemma le_mult_cancel_right__forward {x y z: natural}: x ≤ y → x*z ≤ y*z :=
+    assume ⟨a, (h: a+x = y)⟩,
+    suffices a*z + x*z = y*z, from ⟨a*z, this⟩,
+    calc
+        a*z + x*z = (a + x)*z  : by rw add_dist_mult
+        ...       = y*z        : by rw h
+
+lemma mult_cancel_right {x y z: natural}: z ≠ 0 → x*z = y*z → x = y :=
+    assume hz: z ≠ 0,
+    suffices ∀ b: natural, x*z = b*z → x = b, from this y,
+    natural.rec_on x (
+        assume y : natural,
+        assume h: 0*z = y*z,
+        have h: y*z = 0, by rw [←h, zero_mult z],
+        eq.symm (mult_nz_eq_z_imp_z h hz)
+    ) (
+        assume a: natural,
+        assume hr:  ∀ (b : natural), a * z = b * z → a = b,
+        assume y: natural,
+        assume h: (a+1) * z = y * z,
+        if hy: y=0 then
+            have h: (a+1) * z = 0, by rw [h, hy, zero_mult],
+            have h: (a+1) = 0, from mult_nz_eq_z_imp_z h hz,
+            absurd h (succ_ne_zero a)
+        else
+            let ⟨b, hy⟩ := nz_implies_succ hy in (
+                have h: (a+1)*z = (b+1)*z, from hy ▸ h,
+                suffices a = b, from show a + 1 = y, by rw [this, hy],
+                suffices z + a*z = z + b*z, from hr b (add_cancel_left this),
+                calc
+                    z + a*z = z + z*a  : by rw mult_com
+                    ...     = z*(a+1)  : by refl
+                    ...     = (a+1)*z  : by rw mult_com
+                    ...     = (b+1)*z  : by assumption
+                    ...     = z*(b+1)  : by rw mult_com
+                    ...     = z + z*b  : by refl
+                    ...     = z + b*z  : by rw mult_com
+            )
+    )
+
+lemma lt_mult_cancel_right__forward {x y z: natural}: z ≠ 0 → x < y → x*z < y*z :=
+    assume hz: z ≠ 0,
+    assume ⟨hle, hne⟩,
+    suffices x*z ≠ y*z, from ⟨le_mult_cancel_right__forward hle, this⟩,
+    assume hc: x*z = y*z,
+    absurd (mult_cancel_right hz hc) hne
+
+lemma le_mult_cancel_right {x y z: natural}: (x ≤ y ∨ z = 0) ↔ x*z ≤ y*z :=
+    iff.intro (
+        assume h,
+        or.elim h (
+            le_mult_cancel_right__forward
+        ) (
+            assume hz: z = 0,
+            suffices x*z = y*z, from eq_implies_le this,
+            calc
+                x * z = x * 0   : by rw hz
+                ...   = 0       : by refl
+                ...   = y * 0   : by refl
+                ...   = y * z   : by rw hz
+        )
+    ) (
+        assume h: x*z ≤ y*z,
+        if hc: x ≤ y then
+            or.intro_left _ hc
+        else
+            if hz: z = 0 then
+                or.intro_right _ hz
+            else
+                have hc: y < x, from iff.elim_left not_le hc,
+                have hc: y*z < x*z, from lt_mult_cancel_right__forward hz hc,
+                absurd h (iff.elim_right not_le hc)
+    )
+
+lemma lt_mult_cancel_right {x y z: natural}: (x<y ∧ z≠0) ↔ x*z < y*z :=
+    iff.intro (
+        assume ⟨hlt, hz⟩,
+        lt_mult_cancel_right__forward hz hlt
+    ) (
+        assume h: x*z < y*z,
+        have z ≠ 0, from (
+            assume hc: z=0,
+            have hc: x*0 < y*0, from hc ▸ h,
+            absurd (show x*0 = y*0, by rw [mult_zero, mult_zero]) hc.right
+        ),
+        if hc: x < y then
+            ⟨hc, ‹z≠0›⟩
+        else
+            have hc: y ≤ x, from iff.elim_left not_lt hc,
+            have hc: y*z ≤ x*z, from le_mult_cancel_right__forward hc,
+            have hc: ¬(x*z < y*z), from iff.elim_right not_lt hc,
+            absurd h hc
+    )
+
+lemma sub_dist_mult {x y z: natural}: y ≤ x → (x - y)*z = x*z - y*z :=
+    assume h: y ≤ x,
+    natural.rec_on z (by refl) (
+        assume c: natural,
+        assume hr: (x - y) * c = x * c - y * c,
+        have y - x = 0, from le_sub_zero h,
+        have y*c ≤ x*c, from iff.elim_left le_mult_cancel_right (or.intro_left _ h),
+        have y*c - x*c = 0, from le_sub_zero ‹y*c ≤ x*c›,
+        calc
+            (x - y) * (c+1) =  (x - y) + (x - y)*c    : by refl
+            ...             =  (x - y) + (x*c - y*c)  : by rw hr
+            ...             =  (x - y) + x*c - y*c    : by rw add_sub_asoc ‹(y*c) - (x*c) = 0›
+            ...             =  x*c + (x - y) - y*c    : by rw add_com
+            ...             =  (x*c + x) - y - y*c    : by rw add_sub_asoc ‹y - x = 0›
+            ...             =  (x*c + x) - (y + y*c)  : by rw sub_of_sub
+            ...             =  (x + x*c) - (y + y*c)  : by rw add_com
+            ...             =  (x*(c+1)) - (y*(c+1))  : by refl
+    )
 
 -- And essentially that's the natural numbers
 

@@ -1144,6 +1144,119 @@ lemma mult_elim_right {x y z: integer}: y ≠ 0 → x*y = z*y → x=z :=
             )
         )
 
+lemma add_mult_coe_coe_coe (a b c: natural): (from_natural a + from_natural b)*from_natural c = from_natural a*from_natural c + from_natural b*from_natural c :=
+show from_natural ((a+b)*c) = from_natural (a*c + b*c), by rw natural.add_dist_mult
+
+lemma add_mult_coe_coe_neg (a b c: natural): (from_natural a + from_natural b)*(-[c+1]) = from_natural a*(-[c+1]) + from_natural b*(-[c+1]) :=
+calc
+    (from_natural a + from_natural b)*(-[c+1]) = (from_natural (a+b))*(-[c+1])                          : by refl
+    ...                                        = -from_natural ((a+b)*(c+1))                            : by refl
+    ...                                        = -from_natural (a*(c+1) + b*(c+1))                      : by rw natural.add_dist_mult
+    ...                                        = -(from_natural (a*(c+1)) + from_natural (b*(c+1)))     : by refl
+    ...                                        = -from_natural (a*(c+1)) + -from_natural (b*(c+1))      : by rw neg_add
+    ...                                        = (from_natural a)*(-[c+1]) + (from_natural b)*(-[c+1])  : by refl
+
+lemma add_mult_coe_neg_coe (a b c: natural): (from_natural a + -[b+1])*from_natural c = from_natural a*from_natural c + -[b+1]*from_natural c :=
+if hc: c = 0 then
+    calc
+        (from_natural a + -[b+1]) * from_natural (c) = (from_natural a + -[b+1]) * from_natural 0                   : by rw hc
+        ...                                          = (from_natural a + -[b+1]) * 0                                : by refl
+        ...                                          = 0                                                            : by rw mult_zero
+        ...                                          = 0 + from_natural 0                                           : by rw ←add_zero_ 0
+        ...                                          = 0 + 0                                                        : by refl
+        ...                                          = (from_natural a)*0 + 0                                       : by rw mult_zero
+        ...                                          = (from_natural a)*0 + -[b+1]*0                                : by rw mult_zero (-[b+1])
+        ...                                          = (from_natural a)*(from_natural 0) + -[b+1]*(from_natural 0)  : by refl
+        ...                                          = (from_natural a)*(from_natural c) + -[b+1]*(from_natural c)  : by rw hc
+else
+    let ⟨d, hc⟩ := natural.nz_implies_succ hc in (
+        if hz: (b+1) ≤ a then
+            have (b+1)*(d+1) ≤ a*(d+1), from iff.elim_left natural.le_mult_cancel_right (or.intro_left _ hz),
+            have natural.sub (b+1) a = 0, from natural.le_sub_zero hz,
+            have natural.sub ((b+1)*(d+1)) (a*(d+1)) = 0, from natural.le_sub_zero ‹(b+1)*(d+1) ≤ a*(d+1)›,
+            calc
+                (from_natural a + -[b+1]) * from_natural (c) = (from_natural a + -[b+1]) * from_natural (d+1)                             : by rw hc
+                ...                                          = (sub_of_natural a (b+1)) * from_natural (d+1)                              : by refl
+                ...                                          = (from_natural (natural.sub a (b+1)))* from_natural (d+1)                   : by rw sub_of_natural_sub_eq_zero ‹natural.sub (b+1) a = 0›
+                ...                                          = from_natural ((a - (b+1))*(d+1))                                           : by refl
+                ...                                          = from_natural (a*(d+1) - (b+1)*(d+1))                                       : by rw natural.sub_dist_mult ‹b+1 ≤ a›
+                ...                                          = from_natural (natural.sub (a*(d+1)) ((b+1)*(d+1)))                         : by refl
+                ...                                          = sub_of_natural (a*(d+1)) ((b+1)*(d+1))                                     : by rw sub_of_natural_sub_eq_zero ‹natural.sub ((b+1)*(d+1)) (a*(d+1)) = 0›
+                ...                                          = sub_of_natural (a*(d+1)) ((d+1)*(b+1))                                     : by rw natural.mult_com (b+1)
+                ...                                          = sub_of_natural (a*(d+1)) ((d+1) + (d+1)*b)                                 : by refl
+                ...                                          = sub_of_natural (a*(d+1)) ((d+1)*b + d + 1)                                 : by rw [natural.add_com (d+1), natural.add_asoc]
+                ...                                          = from_natural (a*(d+1)) + -[((d+1)*b + d)+1]                                : by refl
+                ...                                          = from_natural a * (from_natural (d+1)) + -(from_natural ((d+1)*b + d + 1))  : by refl
+                ...                                          = from_natural a * (from_natural (d+1)) + -(from_natural ((d+1) + (d+1)*b))  : by rw [natural.add_asoc ((d+1)*b), natural.add_com (d+1)]
+                ...                                          = from_natural a * (from_natural (d+1)) + -(from_natural ((d+1)*(b+1)))      : by refl
+                ...                                          = from_natural a * (from_natural (d+1)) + from_natural (d+1) * (-[b+1])      : by refl
+                ...                                          = from_natural a * (from_natural (d+1)) + (-[b+1]) * (from_natural (d+1))    : by rw mul_com (from_natural (d+1))
+                ...                                          = from_natural a * (from_natural c) + (-[b+1]) * (from_natural c)            : by rw hc
+        else
+            have hz: a < b+1, from iff.elim_left natural.not_le hz,
+            have a*c < (b+1)*c, from iff.elim_left natural.lt_mult_cancel_right ⟨hz, ‹c≠0›⟩,
+            have natural.sub (b+1) a ≠ 0, from natural.lt_sub_nz hz,
+            have natural.sub ((b+1)*c) (a*c) ≠ 0, from natural.lt_sub_nz ‹a*c < (b+1)*c›,
+            calc
+                (from_natural a + -[b+1]) * from_natural (c) = (sub_of_natural a (b+1)) * from_natural (c)                : by refl
+                ...                                          = (-from_natural (natural.sub (b+1) a))*(from_natural c)     : by rw sub_of_natural_sub_ne_zero ‹natural.sub (b+1) a ≠ 0›
+                ...                                          = -((from_natural (natural.sub (b+1) a))*(from_natural c))   : by rw neg_mult
+                ...                                          = -from_natural (((b+1) - a)*c)                              : by refl
+                ...                                          = -from_natural ((b+1)*c - a*c)                              : by rw natural.sub_dist_mult ‹a < b+1›.left
+                ...                                          = -from_natural (natural.sub ((b+1)*c) (a*c))                : by refl
+                ...                                          = sub_of_natural (a*c) ((b+1)*c)                             : by rw sub_of_natural_sub_ne_zero ‹natural.sub ((b+1)*c) (a*c) ≠ 0›
+                ...                                          = sub_of_natural (a*c) ((b+1)*(d+1))                         : by rw hc
+                ...                                          = sub_of_natural (a*c) ((b+1) + (b+1)*d)                     : by refl
+                ...                                          = sub_of_natural (a*c) ((b+1)*d + b + 1)                     : by rw [natural.add_com, natural.add_asoc]
+                ...                                          = from_natural (a*c) + -[((b+1)*d + b)+1]                    : by refl
+                ...                                          = from_natural (a*c) + -from_natural ((b+1)*d + b + 1)       : by refl
+                ...                                          = from_natural (a*c) + -from_natural ((b+1) + (b+1)*d)       : by rw [natural.add_asoc, natural.add_com]
+                ...                                          = from_natural (a*c) + -from_natural ((b+1)*(d+1))           : by refl
+                ...                                          = from_natural (a*c) + -from_natural ((b+1)*c)               : by rw hc
+                ...                                          = from_natural (a*c) + -from_natural ((b+1)*c)               : by rw hc
+                ...                                          = from_natural a * from_natural c + (-[b+1])*from_natural c  : by refl
+    )
+
+
+lemma add_com_mult {x y z: integer}: ((x + y)*z = x*z + y*z) → (y + x)*z = y*z + x*z :=
+    assume h: (x + y)*z = x*z + y*z,
+    calc
+        (y + x) * z = (x + y)*z  : by rw add_com
+        ...         = x*z + y*z  : by rw h
+        ...         = y*z + x*z  : by rw add_com
+
+lemma add_neg_mult {x y z: integer}: ((x + y)*z = x*z + y*z) → (-x + -y)*z = -x*z + -y*z :=
+    assume h: (x + y)*z = x*z + y*z,
+    calc
+        (-x + -y) * z = (-(x + y))*z     : by rw neg_add
+        ...           = -((x+y)*z)       : by rw neg_mult
+        ...           = -(x*z + y*z)     : by rw h
+        ...           = -(x*z) + -(y*z)  : by rw neg_add
+        ...           = -x*z + -y*z      : by rw [neg_mult, neg_mult]
+
+lemma add_mult_neg {x y z: integer}: ((x + y)*z = x*z + y*z) → (x + y)*-z = x*-z + y*-z :=
+    assume h: (x + y)*z = x*z + y*z,
+    calc
+        (x + y)*(-z) = -((x+y)*z)       : by rw mult_neg
+        ...          = -(x*z + y*z)     : by rw h
+        ...          = -(x*z) + -(y*z)  : by rw neg_add
+        ...          = x*(-z) + y*(-z)  : by rw [mult_neg, mult_neg]
+
+
+lemma add_mult__coe (x y: integer) (c: natural): (x + y) * from_natural c = x*from_natural c + y*from_natural c :=
+match x, y with
+| from_natural a, from_natural b := add_mult_coe_coe_coe a b c
+| from_natural a, -[b+1]         := add_mult_coe_neg_coe a b c
+| -[a+1],         from_natural b := add_com_mult (add_mult_coe_neg_coe b a c)
+| -[a+1],         -[b+1]         := add_neg_mult (add_mult_coe_coe_coe (a+1) (b+1) c)
+end
+
+lemma add_mult (x y z : integer): (x + y)*z = x*z + y*z :=
+match z with
+| from_natural c := add_mult__coe x y c
+| -[c+1]         := add_mult_neg (add_mult__coe x y (c+1))
+end
+
 -- divisibility
 
 def dvd (x y: integer):= ∃ z: integer, x*z = y

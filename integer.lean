@@ -98,7 +98,6 @@ begin
     refl
 end
 
-@[simp]
 lemma succ_of_neg_succ_is_plus_one (n: natural): succ (-[(n+1)+1]) = (-[(n+1)+1]) + 1 :=
 have h: natural.sub ((n+1) + 1) 1 = n+1, from natural.succ_sub_one (n+1),
 have nz: natural.sub ((n+1) + 1) 1 ≠ 0, from h ▸ (natural.succ_ne_zero n),
@@ -112,7 +111,6 @@ lemma succ_is_add_one (x: integer): succ x = x + 1 :=
     | -[(n+1)+1]       := succ_of_neg_succ_is_plus_one n
     end
 
-@[simp]
 lemma pred_succ_is_succ_sub_one (n: natural): pred (from_natural (n+1)) = (from_natural (n+1)) - 1 :=
     have 1 ≤ (n+1), from ⟨n, by refl⟩,
     have natural.sub 1 (n+1) = 0, from natural.le_sub_zero ‹1 ≤ (n+1)›,
@@ -127,7 +125,6 @@ lemma pred_is_sub_one (x: integer): pred x = x - 1 :=
     | -[n+1]               := by refl
     end
 
-@[simp]
 lemma sub_of_natural_zero (a: natural): sub_of_natural a 0 = from_natural a := sub_of_natural_sub_eq_zero (natural.zero_sub a)
 
 lemma coe_of_pred_is_pred {x: natural}: x≠0 → from_natural (natural.pred x) = pred (from_natural x) :=
@@ -142,7 +139,6 @@ lemma coe_of_pred_is_pred {x: natural}: x≠0 → from_natural (natural.pred x) 
 lemma coe_of_succ_is_succ (x: natural):  from_natural (x+1) = from_natural x + 1 :=
     natural.rec_on x (by refl) (assume n: natural, assume hr: from_natural (n + 1) = ↑n + 1, by refl)
 
-@[simp]
 lemma succ_of_neg_succ (x: natural): -[x+1] + 1 = -(from_natural x) :=
     natural.rec_on x (
         by refl
@@ -179,14 +175,12 @@ lemma inv_succ_of_neg_is_pred (n: natural): -(-[n+1] + 1) = pred (-(-[n+1])) :=
                 ...           = pred (-(-[(m+1)+1]))            : by refl
                 ...           = pred (- -[n+1])                 : by rw ‹n = m+1›
 
-@[simp]
 lemma inv_succ_is_pred (x: integer): -(x + 1) = pred (-x) :=
 match x with
 | from_natural n := inv_succ_of_nat_is_pred n
 | -[n+1]         := inv_succ_of_neg_is_pred n
 end
 
-@[simp]
 lemma inv_pred_is_succ (x: integer): -(pred x) = -x + 1 :=
     calc
         -(pred x) = -(pred (-(-x)))  : by rw ←neg_neg x
@@ -205,7 +199,6 @@ match x with
 | -[n+1]           := by refl
 end
 
-@[simp]
 lemma pred_succ (x: integer): pred (x+1) = x :=
 match x with
 | (from_natural n) := by refl
@@ -213,7 +206,6 @@ match x with
 | -[(n+1)+1]       := by refl
 end
 
-@[simp]
 lemma succ_pred (x: integer): (pred x) + 1 = x :=
 match x with
 | (from_natural (n+1)) := by refl
@@ -221,7 +213,6 @@ match x with
 | -[n+1]               := by refl
 end
 
-@[simp]
 lemma pred_of_sum_is_sum_with_pred_nat_nat (a b : natural): pred (from_natural a + from_natural b) = from_natural a + (pred (from_natural b)) :=
 match b with
 | 0    := show pred (a + from_natural 0) = a - 1, by rw [pred_is_sub_one, ←add_zero_ a]
@@ -232,7 +223,6 @@ calc
     ...                           = from_natural a + pred (from_natural (b+1))           : by rw coe_of_pred_is_pred (natural.succ_ne_zero b)
 end
 
-@[simp]
 lemma sub_of_natural_succ (a b : natural): sub_of_natural (a+1) b = (sub_of_natural a b) + 1 :=
 if hz: natural.sub b (a+1) = 0 then
     have b ≤ a+1, from natural.diff_zero hz,
@@ -267,7 +257,6 @@ else
         ...                    = (-(from_natural (natural.sub b a))) + 1   : by refl
         ...                    = (sub_of_natural a b) + 1                  : by rw sub_of_natural_sub_ne_zero (natural.lt_sub_nz ‹a < b›)
 
-@[simp]
 lemma sub_of_natural_pred (a b : natural): sub_of_natural a (b+1) = pred (sub_of_natural a b) :=
 if hz: natural.sub (b+1) a = 0 then
     have b < a, from natural.succ_le_implies_lt (natural.diff_zero hz),
@@ -302,7 +291,6 @@ else
         have natural.sub b a ≠ 0, from natural.lt_sub_nz ⟨‹a ≤ b›, ‹a ≠ b›⟩,
         show pred (-(from_natural (natural.sub b a))) = pred (sub_of_natural a b), by rw sub_of_natural_sub_ne_zero ‹natural.sub b a ≠ 0›
 
-@[simp]
 lemma pred_of_sum_is_sum_with_pred_neg_nat (a b : natural): pred (-[a+1] + from_natural b) = -[a+1] + pred (from_natural b) :=
 match b with
 | 0   := show pred (-[a+1] + from_natural 0) = pred (-[a+1]), by rw ←add_zero_ (-[a+1])
@@ -313,17 +301,14 @@ calc
     ...                                = -[a+1] + (pred (from_natural (b+1)))   : by rw [←pred_succ (from_natural b), coe_of_succ_is_succ b]
 end
 
-@[simp]
 lemma pred_of_sum_is_sum_with_pred_nat_neg (a b : natural): pred (from_natural a + -[b+1]) = from_natural a + pred(-[b+1]) :=
 show pred (sub_of_natural a (b+1)) = sub_of_natural a ((b+1)+1), by rw ←sub_of_natural_pred
 
 
-@[simp]
 lemma pred_of_sum_is_sum_with_pred_neg_neg (a b : natural): pred (-[a+1] + -[b+1]) = -[a+1] + pred(-[b+1]) :=
 show -[((a+b+1)+1)+1] = -[(a+(b+1)+1)+1], by rw natural.add_asoc a
 
 
-@[simp]
 lemma pred_of_sum_is_sum_with_pred (x y : integer): pred (x + y) = x + (pred y) :=
 match x, y with
 | from_natural a, from_natural b := pred_of_sum_is_sum_with_pred_nat_nat a b
@@ -332,7 +317,6 @@ match x, y with
 | -[a+1],         -[b+1]         := pred_of_sum_is_sum_with_pred_neg_neg a b
 end
 
-@[simp]
 lemma sub_of_natural_of_add_asoc (a b c: natural): sub_of_natural (a + b) c = from_natural a + sub_of_natural b c :=
     natural.rec_on c (
         calc
@@ -406,7 +390,6 @@ lemma sub_of_natural_of_add_asoc (a b c: natural): sub_of_natural (a + b) c = fr
                 show pred (-(from_natural (natural.sub n (a+b)))) = pred (sub_of_natural (a+b) n), by rw sub_of_natural_sub_ne_zero ‹natural.sub n (a+b) ≠ 0›
     )
 
-@[simp]
 lemma add_com (x y : integer): x + y = y + x :=
 match x, y with
 | from_natural a, from_natural b := show from_natural (a+b) = from_natural (b+a), by rw natural.add_com
@@ -415,7 +398,6 @@ match x, y with
 | -[a+1],         -[b+1]         := show -[(a+b+1)+1] = -[(b+a+1)+1], by rw natural.add_com a b
 end
 
-@[simp]
 lemma sub_of_natural_of_add_right_asoc (a b c: natural): sub_of_natural (a + b) c = sub_of_natural a c + from_natural b:=
 calc
     sub_of_natural (a+b) c = sub_of_natural (b+a) c                 : by rw natural.add_com
@@ -456,7 +438,6 @@ lemma sub_of_natural_self (a : natural): sub_of_natural a a = from_natural 0 :=
     have h: natural.sub a a = 0, from natural.sub_self_zero a,
     show sub_of_natural a a = from_natural 0, by rw [sub_of_natural_sub_eq_zero h, h]
 
-@[simp]
 lemma inv_sub_of_natural (a b: natural): -(sub_of_natural a b) = sub_of_natural b a :=
 if heq: b = a then
     calc
@@ -471,7 +452,6 @@ else
         show -(sub_of_natural a b) = sub_of_natural b a,
         by rw [sub_of_natural_sub_ne_zero hba, ←neg_neg (from_natural (natural.sub b a)), sub_of_natural_sub_eq_zero (natural.le_sub_zero (natural.diff_nz hba).left)]
 
-@[simp]
 lemma neg_add (x y: integer): -(x + y) = -x + -y :=
 match x, y with
 | x,                0                := show -(x + from_natural 0) = -x + from_natural 0, by rw [←add_zero_ x, ←add_zero_ (-x)]
@@ -486,7 +466,6 @@ calc
     ...                    = from_natural ((a+1)+(b+1))               : by rw [←natural.add_asoc a 1 b, natural.add_asoc (a+1) b 1]
 end
 
-@[simp]
 lemma neg_neg_add (x y: integer): (x + y) = -(-x + -y) := by rw [neg_neg (x + y), ←neg_add x y]
 
 lemma add_nn_nn_nn_asoc (a b c: natural):
@@ -521,14 +500,12 @@ lemma add_nn_ng_ng_asoc (a b c: natural):
             ...                                = sub_of_natural a ((b+1)+(c+1))                                : by rw inv_sub_of_natural
             ...                                = sub_of_natural a ((b+c+1)+1)                                  : by rw [←natural.add_asoc (b+1), natural.add_asoc b 1 c, natural.add_com 1 c, natural.add_asoc b c]
 
-@[simp]
 lemma neg_add_add_left (x y z: integer): (-x + y) + z = -((x + -y) + -z) :=
     calc
         (-x + y) + z = -(-(-x + y) + -z)    : by rw neg_neg_add
         ...          = -((-(-x) + -y) + -z) : by rw neg_add (-x) y
         ...          = -((x + -y) + -z)     : by rw ←neg_neg x
 
-@[simp]
 lemma neg_add_add_right (x y z: integer): -(x + (-y + -z)) = -x + (y + z) :=
     calc
         -(x + (-y + -z)) = -x + -(-y + -z)   : by rw neg_add
@@ -558,7 +535,6 @@ match y, z with
 | -[b+1],             -[c+1]             := add_nn_ng_ng_asoc a b c
 end
 
-@[simp]
 lemma add_asoc (x y z : integer): (x + y) + z = x + (y + z) :=
 match x with
 | from_natural a := add_asoc_nn a y z
@@ -657,7 +633,6 @@ lemma coe_le {a b: natural}: a ≤ b ↔ from_natural a ≤ from_natural b :=
         ⟨c, by injection h⟩
     )
 
-@[simp]
 lemma sub_of_sub (x y z: integer): (x - y) - z = (x - (y+z)) :=
     calc
         (x - y) - z = (x + -y) + -z   : by refl
@@ -665,7 +640,6 @@ lemma sub_of_sub (x y z: integer): (x - y) - z = (x - (y+z)) :=
         ...         = x + -(y + z)    : by rw neg_add
         ...         = x - (y + z)     : by refl
 
-@[simp]
 lemma sub_self (x: integer): x - x = 0 :=
 match x with
 | from_natural 0     := by refl
@@ -778,7 +752,6 @@ end
 
 -- And multiplication
 
-@[simp]
 lemma mul_com (x y: integer): x * y = y * x :=
 match x, y with
 | (from_natural a), (from_natural b) := show from_natural (a*b) = from_natural (b*a), by rw natural.mult_com
@@ -836,6 +809,13 @@ calc
     ...            = ((-from_natural (a+1)) * y) * z : by rw ←mult_neg_int
     ...            = (-[a+1] * y) * z                : by refl
 end
+
+@[simp]
+lemma mul_reorder_four (w x y z: integer): w*x*y*z = w*y*x*z :=
+    calc
+        w*x*y*z = (w*(x*y))*z  : by rw mul_asoc
+        ...     = (w*(y*x))*z  : by rw ←mul_com x
+        ...     = w*y*x*z      : by rw mul_asoc
 
 lemma mult_zero (x:integer): x*0 = 0 :=
 match x with
@@ -972,6 +952,8 @@ lemma mult_nz_eq_z_imp_z {x y : integer}: x*y = 0 → y ≠ 0 → x = 0 :=
 
 lemma mult_minusone (x: integer): x*(-1) = -x := by rw [mult_int_neg, mult_one]
 
+lemma minusone_mult (x: integer): -1 * x = -x := by rw [mul_com, mult_minusone]
+
 lemma coe_ne_neg_coe {a b : natural}: a ≠ 0 → from_natural a ≠ - from_natural b :=
     assume h: a ≠ 0,
     assume hc: from_natural a = - from_natural b,
@@ -1032,34 +1014,12 @@ lemma neg_mult_neg_is_pos {x y: integer}: y < 0 → (x < 0 ↔ x*y > 0) :=
         )
     )
 
---lemma pos_mult_pos_is_pos {x y: integer}: x > 0 → (y > 0 ↔ x*y > 0) := _
-
--- lemma pos_mult_neg_is_neg {x y: integer}: y < 0 → (x > 0 ↔ x*y < 0) := _
-
--- lemma neg_mult_pos_is_neg {x y: integer}: x < 0 → (y > 0 ↔ x*y < 0) := _
-
-lemma mult_elim_right_neg_neg {x y z: integer}: y < 0 → x < 0 → x*y = z*y → x = z :=
-    assume hy: y < 0,
-    assume hx: x < 0,
-    assume hxyzy: x*y = z*y,
-    have x*y > 0, from iff.elim_left (neg_mult_neg_is_pos hy) hx,
-    have z*y > 0, from hxyzy ▸ ‹x*y > 0›,
-    have hz: z < 0, from iff.elim_right (neg_mult_neg_is_pos hy) ‹z*y > 0›,
-    let ⟨a, ha⟩ := (iff.elim_left neg_lt_zero hx) in (
-        let ⟨b, hb⟩ := (iff.elim_left neg_lt_zero hy) in (
-            let ⟨c, hc⟩ := (iff.elim_left neg_lt_zero hz) in (
-                have hxyzy: (-[a+1])*(-[b+1]) = (-[c+1])*(-[b+1]), from (ha ▸ hb ▸ hc ▸ hxyzy),
-                have hxyzy: (from_natural ((a+1)*(b+1))) = (from_natural ((c+1)*(b+1))), from hxyzy,
-                have hxyzy: (a+1)*(b+1) = (c+1)*(b+1), by injection hxyzy,
-                have hac: a+1 = c+1, from natural.mult_elim_right (natural.succ_ne_zero b) hxyzy,
-                have hac: a = c, from natural.add_cancel_right hac,
-                have hac: -[a+1] = -[c+1], from hac ▸ (eq.refl (-[a+1])),
-                show x=z, from (eq.symm ha) ▸ (eq.symm hc) ▸ hac
-            )
-        )
-    )
-
+lemma nz_impl_coe_nz {a: natural}: a ≠ 0 → from_natural a ≠ 0 :=
+    assume h: a ≠ 0,
+    assume hc: from_natural a = from_natural 0,
+    absurd (by injection hc) h
 lemma coe_nz_impl_nz {a: natural}: from_natural a ≠ 0 → a ≠ 0 := mt (congr_arg from_natural)
+
 
 lemma neg_lt_gt {x: integer}: x > 0 ↔ -x < 0 :=
     iff.intro (
@@ -1083,6 +1043,20 @@ lemma neg_lt_gt {x: integer}: x > 0 ↔ -x < 0 :=
                 ...  =  from_natural (a+1) : by refl
         )
     )
+
+lemma neg_gt_lt {x: integer}: x < 0 ↔ -x > 0 :=
+iff.intro (
+    match x with
+    | from_natural a := assume h: from_natural (a) < 0, let ⟨b, h⟩ := iff.elim_left neg_lt_zero h in (integer.no_confusion h)
+    | -[a+1]         := assume _, show from_natural (a+1) > 0, from ⟨iff.elim_right coe_ge_zero ⟨a+1,rfl⟩, ne.symm (nz_impl_coe_nz (natural.succ_ne_zero a))⟩
+    end
+) (
+    match x with
+    | from_natural (a+1) := assume h: -[a+1] > 0, let ⟨b, h⟩ := iff.elim_left coe_ge_zero h.left in (integer.no_confusion h)
+    | from_natural 0     := assume h:0 > 0, absurd rfl h.right
+    | -[a+1]             := assume _, iff.elim_right neg_lt_zero ⟨a, rfl⟩
+    end
+)
 
 lemma neg_mult (x y : integer): (-x) * y = - (x * y) :=
 match x, y with
@@ -1109,6 +1083,74 @@ end
 lemma mult_neg (x y : integer): x * -y = - (x * y) := by rw [mul_com, neg_mult, mul_com]
 
 lemma neg_mult_neg (x y : integer): -x * -y = x * y := by rw [neg_mult, mult_neg, ←neg_neg (x*y)]
+
+lemma pos_mult_pos_is_pos {x y: integer}: y > 0 → (x > 0 ↔ x*y > 0) :=
+assume hy: y > 0,
+have hy: -y < 0, from iff.elim_left neg_lt_gt hy,
+iff.intro (
+    assume hx: x > 0,
+    have hx: -x < 0, from iff.elim_left neg_lt_gt hx,
+    suffices (-x) * (-y) > 0, from neg_mult_neg x y ▸ this,
+    iff.elim_left (neg_mult_neg_is_pos hy) hx
+) (
+    assume h: x*y > 0,
+    suffices -x < 0, from iff.elim_right neg_lt_gt this,
+    suffices (-x)*(-y) > 0, from iff.elim_right (neg_mult_neg_is_pos hy) this,
+    (eq.symm (neg_mult_neg x y)) ▸ h
+)
+
+
+lemma mult_elim_right_neg_neg {x y z: integer}: y < 0 → x < 0 → x*y = z*y → x = z :=
+    assume hy: y < 0,
+    assume hx: x < 0,
+    assume hxyzy: x*y = z*y,
+    have x*y > 0, from iff.elim_left (neg_mult_neg_is_pos hy) hx,
+    have z*y > 0, from hxyzy ▸ ‹x*y > 0›,
+    have hz: z < 0, from iff.elim_right (neg_mult_neg_is_pos hy) ‹z*y > 0›,
+    let ⟨a, ha⟩ := (iff.elim_left neg_lt_zero hx) in (
+        let ⟨b, hb⟩ := (iff.elim_left neg_lt_zero hy) in (
+            let ⟨c, hc⟩ := (iff.elim_left neg_lt_zero hz) in (
+                have hxyzy: (-[a+1])*(-[b+1]) = (-[c+1])*(-[b+1]), from (ha ▸ hb ▸ hc ▸ hxyzy),
+                have hxyzy: (from_natural ((a+1)*(b+1))) = (from_natural ((c+1)*(b+1))), from hxyzy,
+                have hxyzy: (a+1)*(b+1) = (c+1)*(b+1), by injection hxyzy,
+                have hac: a+1 = c+1, from natural.mult_elim_right (natural.succ_ne_zero b) hxyzy,
+                have hac: a = c, from natural.add_cancel_right hac,
+                have hac: -[a+1] = -[c+1], from hac ▸ (eq.refl (-[a+1])),
+                show x=z, from (eq.symm ha) ▸ (eq.symm hc) ▸ hac
+            )
+        )
+    )
+
+lemma neg_mult_pos_is_neg {x y: integer}: y > 0 → (x < 0 ↔ x*y < 0) :=
+assume hy: y > 0,
+iff.intro (
+    assume hx: x < 0,
+    have hx: -x > 0, from iff.elim_left neg_gt_lt hx,
+    suffices -(x*y) > 0, from iff.elim_right neg_gt_lt this,
+    suffices (-x)*y > 0, from neg_mult x y ▸ this,
+    iff.elim_left (pos_mult_pos_is_pos hy) hx
+) (
+    assume h: x*y < 0,
+    have h: -(x*y) > 0, from iff.elim_left neg_gt_lt h,
+    have h: (-x)*y > 0, from (eq.symm (neg_mult x y)) ▸ h,
+    suffices -x > 0, from iff.elim_right neg_gt_lt this,
+    iff.elim_right (pos_mult_pos_is_pos hy) h
+)
+
+lemma pos_mult_neg_is_neg {x y: integer}: y < 0 → (x > 0 ↔ x*y < 0) :=
+assume hy: y < 0,
+have hy: -y > 0, from iff.elim_left neg_gt_lt hy,
+iff.intro (
+    assume hx: x > 0,
+    have hx: -x < 0, from iff.elim_left neg_lt_gt hx,
+    suffices (-x)*(-y) < 0, from neg_mult_neg x y ▸ this,
+    iff.elim_left (neg_mult_pos_is_neg hy) hx
+) (
+    assume h: x*y < 0,
+    have h: (-x)*(-y) < 0, from (eq.symm (neg_mult_neg x y)) ▸ h,
+    suffices -x < 0, from iff.elim_right neg_lt_gt this,
+    iff.elim_right (neg_mult_pos_is_neg hy) h
+)
 
 lemma mult_elim_right {x y z: integer}: y ≠ 0 → x*y = z*y → x=z :=
     assume hy: y ≠ 0,
@@ -1251,11 +1293,14 @@ match x, y with
 | -[a+1],         -[b+1]         := add_neg_mult (add_mult_coe_coe_coe (a+1) (b+1) c)
 end
 
+@[simp]
 lemma add_mult (x y z : integer): (x + y)*z = x*z + y*z :=
 match z with
 | from_natural c := add_mult__coe x y c
 | -[c+1]         := add_mult_neg (add_mult__coe x y (c+1))
 end
+
+lemma nz_mult_nz_nz {x y: integer}: x ≠ 0 → y ≠ 0 → x*y ≠ 0 := assume hx: x ≠ 0, assume hy: y ≠ 0, assume hc: x*y = 0, absurd (mult_nz_eq_z_imp_z hc hy) hx
 
 -- divisibility
 
@@ -1276,6 +1321,110 @@ lemma dvd_neg (x y: integer): x∣y ↔ -x∣y :=
     ) (
         assume ⟨z, (h: -x*z=y)⟩,
         ⟨-z, show x * -z = y, by rw [mult_int_neg, ←mult_neg_int, h]⟩
+    )
+
+-- A couple of useful functions
+
+def abs: integer → natural
+| (from_natural a) := a
+| -[a+1]           := a+1
+
+def sgn: integer → integer
+| (from_natural a+1) := 1
+| (from_natural 0)   := 0
+| -[a+1]             := -1
+
+lemma abs_zero {x: integer}: x = 0 ↔ abs x = 0 :=
+iff.intro (
+    assume hx: x = from_natural 0,
+    show abs x = abs (from_natural 0), by rw hx
+) (
+    match x with
+    | from_natural (a+1) := assume :a+1 = 0, absurd this (natural.succ_ne_zero a)
+    | from_natural 0     := assume _, by refl
+    | -[a+1]             := assume :a+1 = 0, absurd this (natural.succ_ne_zero a)
+    end
+)
+
+lemma sgn_zero {x : integer}: x = 0 ↔ sgn x = 0 :=
+iff.intro (
+    assume h: x= from_natural 0,
+    show sgn x = sgn (from_natural 0), by rw h
+) (
+    match x with
+    | from_natural (a+1) := assume h: from_natural 1 = from_natural 0, have h: (1: natural) = 0, by injection h, natural.no_confusion h
+    | from_natural 0     := assume _, by refl
+    | -[a+1]             := assume h: -[0+1] = from_natural 0, integer.no_confusion h
+    end
+)
+
+lemma sgn_neg {x: integer}: x < 0 ↔ sgn x = -1 :=
+iff.intro (
+    assume h: x < 0,
+    let ⟨a, h⟩ := iff.elim_left neg_lt_zero h in (
+        calc
+            sgn x = sgn (-[a+1])  : by rw h
+            ...   = -1            : by refl
+    )
+) (
+    match x with
+    | from_natural (a+1) := assume h, suffices 1 = (-1 : integer), from integer.no_confusion this, show sgn (from_natural (a+1)) = (-1: integer), by rw h
+    | from_natural 0     := assume h, suffices 0 = (-1 : integer), from integer.no_confusion this, show sgn (from_natural 0) = (-1: integer), by rw h
+    | -[a+1]             := assume h, iff.elim_right neg_lt_zero ⟨a, rfl⟩
+    end
+)
+
+lemma sgn_pos {x: integer}: x > 0 ↔ sgn x = 1 :=
+iff.intro (
+    assume h: x > 0,
+    let ⟨a, hle⟩ := iff.elim_left coe_ge_zero h.left in (
+        have h: from_natural a ≠ 0, from assume hc, have x = 0, from (eq.symm hle) ▸ hc, absurd this (ne.symm h.right),
+        have a ≠ 0, from coe_nz_impl_nz h,
+        let ⟨b, h⟩ := natural.nz_implies_succ ‹a ≠ 0› in (
+            calc
+                sgn x = sgn (from_natural a)      : by rw hle
+                ...   = sgn (from_natural (b+1))  : by rw h
+                ...   = 1                         : by refl
+        )
+    )
+) (
+    match x with
+    | from_natural (a+1) := assume h, suffices from_natural (a+1) ≠ 0, from ⟨iff.elim_right coe_ge_zero ⟨a+1, rfl⟩, (ne.symm this)⟩, assume hc, have hc: a+1 = 0, by injection hc, natural.no_confusion hc
+    | from_natural 0     := assume h, have 0 = (1: integer), from h, have h: 0 = (1: natural), by injection h, natural.no_confusion h
+    | -[a+1]             := assume h, suffices -1 = (1 : integer), from integer.no_confusion this, show sgn (-[a+1]) = (1: integer), by rw h
+    end
+)
+
+lemma sgn_mult_abs (x: integer): sgn x * abs x = x :=
+match x with
+| from_natural (a+1) := show 1 * from_natural (a+1) = from_natural (a+1), by rw one_mult
+| from_natural 0     := by refl
+| -[a+1]             := show -1 * from_natural (a+1) = -from_natural (a+1), by rw minusone_mult
+end
+
+lemma sgn_mult_nat {y: natural}: y ≠ 0 → ∀ x: integer, sgn x = sgn (x*↑y) :=
+assume hy: y ≠ 0,
+assume x: integer,
+have hy: from_natural y > 0, from ⟨iff.elim_right coe_ge_zero ⟨y, rfl⟩, ne.symm (nz_impl_coe_nz hy)⟩,
+suffices sgn (x*from_natural y) = sgn x, from eq.symm this,
+if hx: x = 0 then
+    calc
+        sgn (x*from_natural y) = sgn (0*from_natural y)  : by rw hx
+        ...                    = sgn 0                   : by rw zero_mult
+        ...                    = sgn x                   : by rw hx
+else
+    or.elim (ne_implies_lt_or_gt hx) (
+        assume hx: x < 0,
+        have h: x*from_natural y < 0, from iff.elim_left (neg_mult_pos_is_neg hy) hx,
+        calc
+            sgn (x*from_natural y) = -1    : by rw iff.elim_left sgn_neg h
+            ...                    = sgn x : by rw iff.elim_left sgn_neg hx
+    ) (
+        assume hx: x > 0,
+        have h: x*from_natural y > 0, from iff.elim_left (pos_mult_pos_is_pos hy) hx,
+        calc
+            sgn (x*from_natural y) = 1     : by rw iff.elim_left sgn_pos h
+            ...                    = sgn x : by rw iff.elim_left sgn_pos hx
     )
 
 end integer

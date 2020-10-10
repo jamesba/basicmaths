@@ -1,6 +1,36 @@
 import .natural
 import .integer
 
+--
+-- So here we make use of two new features, quotients and subtypes
+--
+--  Given a type α an a property p: α → Prop we can define a new type
+--  { a: α // p a }, which is a type where each element is of the form
+--  ⟨a, h⟩, where a : α and h : p a.
+--
+--  Given a type α and a relation r: α → α → Prop we have new properties
+--    * reflexive r := (∀ a : α, r a a)
+--    * symmetric r := (∀ a b : α, r a b ↔ r b a)
+--    * transitive r := (∀ a b c : α, r a b ∧ r b c → r a c)
+--    * equivalence r := reflexive r ∧ symmetric r ∧ transitive r
+--
+--  Given a type α, a relation r: α → α → Prop and a proof h: equivalence r
+--    * s: setoid α is an instance which can be defined as ⟨r, h⟩
+--    * and this defines a new type quotient s
+--    * given any a : α we have ⟦a⟧ : quotient s
+--    * given any a b : α we have the notation a ≈ b := r a b
+--    * given any a b : α quotient.sound is a proof a ≈ b → ⟦a⟧ = ⟦b⟧
+--    * given any a b : α quotient.exact is a proof ⟦a⟧ = ⟦b⟧ → a ≈ b
+--    * given any f: α → α and a proof h: ∀ a b : α, a ≈ b → f a ≈ f b then
+--      given x : quotient s, then quotient.lift_on x f h : quotient s, defined
+--      such that quotient.lift_on ⟦a⟧ f h = ⟦f a⟧
+--    * given any p: (quotient s) → Prop and a proof h: ∀ a : α, p ⟦a⟧ then
+--      for any x : (quotient s), quotient.induction_on x h is a proof of p x
+--
+--   quotient.lift_on₂ and quotient.lift_on₃ are shorthands for using quotient.lift_on
+--   repeatedly on a function α → α → α or α → α → α → α respectively.
+--
+
 -- Here we go! Fractions!
 
 structure int_nat_pair := (n: integer) (d: natural)
@@ -324,6 +354,5 @@ def inv (x: non_zero_rational): non_zero_rational :=
 )⟩
 
 instance nzrational_has_inv: has_inv non_zero_rational := ⟨inv⟩
-
 
 end rational

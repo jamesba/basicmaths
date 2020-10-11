@@ -41,9 +41,9 @@ namespace fraction
 
 open fraction
 
-def n: fraction → integer := λ x: fraction, x.val.n
+def n: fraction → 𝐙 := λ x: fraction, x.val.n
 
-def d: fraction → natural := λ x: fraction, x.val.d
+def d: fraction → 𝐍 := λ x: fraction, x.val.d
 
 def nz (x: fraction): (x.d ≠ 0) := x.2
 
@@ -332,8 +332,11 @@ else
         ...            = ⟦(fraction.inv ⟨b, hb⟩).val⟧  : by rw quotient.sound hs
         ...            = inv_frac_rat b                : by rw inv_frac_rat_nz b hb
 
-def non_zero_rational := {f: 𝐐 // (f ≠ 0)}
-def inv (x: non_zero_rational): non_zero_rational :=
+def non_zero_members (α : Type) [has_zero α]: Type := {a:α // a ≠ 0 }
+
+postfix `ˣ`:1025 := non_zero_members
+
+def inv (x: 𝐐ˣ): 𝐐ˣ :=
 ⟨quotient.lift_on x.val inv_frac_rat inv_frac_rat_invariant,
 (
     suffices ∀ a : 𝐐, a ≠ 0 → quotient.lift_on (a) inv_frac_rat inv_frac_rat_invariant ≠ 0, from this x.val x.property,
@@ -354,6 +357,6 @@ def inv (x: non_zero_rational): non_zero_rational :=
     )
 )⟩
 
-instance nzrational_has_inv: has_inv non_zero_rational := ⟨inv⟩
+instance nzrational_has_inv: has_inv 𝐐ˣ := ⟨inv⟩
 
 end rational

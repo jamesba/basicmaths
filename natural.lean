@@ -86,22 +86,23 @@ inductive natural : Type
 | zero : natural
 | succ : natural → natural
 
+notation `𝐍` := natural
+
 namespace natural
 
 open natural
 
-instance natural_has_zero : has_zero natural := ⟨zero⟩
-instance natural_has_one : has_one natural := ⟨succ zero⟩
-
+instance natural_has_zero : has_zero 𝐍 := ⟨zero⟩
+instance natural_has_one : has_one 𝐍 := ⟨succ zero⟩
 
 -- equality is already defined for all types, and includes some of the properties we want for
 -- peano's axioms, so I'll quickly prove them.
-lemma eq_refl (n : natural): n = n := rfl
-lemma eq_sym (x y : natural): x = y → y = x := eq.symm
-lemma eq_trans (x y z : natural) (h1: x = y) (h2: y = z): (x = z) := eq.trans ‹x = y› ‹y = z›
+lemma eq_refl (n : 𝐍): n = n := rfl
+lemma eq_sym (x y : 𝐍): x = y → y = x := eq.symm
+lemma eq_trans (x y z : 𝐍) (h1: x = y) (h2: y = z): (x = z) := eq.trans ‹x = y› ‹y = z›
 -- Peano's 5th is implicit in how = is defined
 
-lemma succ_inj {x y : natural}: x = y ↔ succ x = succ y :=
+lemma succ_inj {x y : 𝐍}: x = y ↔ succ x = succ y :=
     iff.intro (
         assume :x = y,
         congr_arg succ ‹x = y›
@@ -110,7 +111,7 @@ lemma succ_inj {x y : natural}: x = y ↔ succ x = succ y :=
         show x = y, by injection h
     )
 
-lemma zero_not_succ  (x : natural):  (succ x ≠ 0) :=
+lemma zero_not_succ  (x : 𝐍):  (succ x ≠ 0) :=
     assume h,
     natural.no_confusion h
 
@@ -120,53 +121,53 @@ lemma zero_not_succ  (x : natural):  (succ x ≠ 0) :=
 -- parameter as 0 or succ a, but this is unfortunate. If you do it
 -- this way round then (a + 1) = a + succ 0 = succ a + 0 = succ a is
 -- definitional, and so can be used in unfolding future definitions
-def add : natural → natural → natural
+def add : 𝐍 → 𝐍 → 𝐍
     | a  0        := a
     | a  (succ b) := succ (add a b)
 
-instance natural_has_add : has_add natural := ⟨add⟩
+instance natural_has_add : has_add 𝐍 := ⟨add⟩
 
 -- And prove some standard additive properties
-lemma zero_add_ (x : natural): 0 + x = x :=
+lemma zero_add_ (x : 𝐍): 0 + x = x :=
     natural.rec_on x (
-        show (0 : natural) + 0 = 0, by refl
+        show (0 : 𝐍) + 0 = 0, by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: 0 + n = n,
         calc
             0 + succ n = succ (0 + n) : by refl
             ...        = succ n       : by rw h
     )
-lemma add_zero_ (x : natural): x + 0 = x := by refl
+lemma add_zero_ (x : 𝐍): x + 0 = x := by refl
 
-lemma one_add (x : natural): 1 + x = succ x :=
+lemma one_add (x : 𝐍): 1 + x = succ x :=
     natural.rec_on x (
         show 1 + 0 = succ 0, by refl
     ) (
-        assume n : natural,
+        assume n : 𝐍,
         assume h : 1 + n = succ n,
         calc
             1 + (succ n) = succ (1 + n)  : by refl
             ...          = succ (succ n) : by rw h
     )
-lemma add_one (x : natural): x + 1 = succ x := by refl
+lemma add_one (x : 𝐍): x + 1 = succ x := by refl
 
-lemma add_asoc (x y z : natural): (x + y) + z = x + (y + z) :=
+lemma add_asoc (x y z : 𝐍): (x + y) + z = x + (y + z) :=
     natural.rec_on z (
         show (x + y) + 0 = x + (y + 0), by refl
     ) (
-        assume n : natural,
+        assume n : 𝐍,
         assume h : (x + y) + n = x + (y + n),
         calc
             (x + y) + succ n = succ ((x + y) + n)   : by refl
             ...              = succ (x + (y + n))   : by rw h
             ...              = x + succ (y + n)     : by refl
     )
-lemma add_com (x y : natural): x + y = y + x :=
+lemma add_com (x y : 𝐍): x + y = y + x :=
     natural.rec_on y (
         show x + 0 = 0 + x, by rwa [add_zero_, zero_add_]
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h : x + n = n + x,
         calc
             x + succ n = x + (n + 1)    : by rw add_one
@@ -179,14 +180,14 @@ lemma add_com (x y : natural): x + y = y + x :=
     )
 
 @[simp]
-lemma add_rearrange (x y z : natural): (x + y) + z = (x + z) + y := (
+lemma add_rearrange (x y z : 𝐍): (x + y) + z = (x + z) + y := (
     calc
         (x + y) + z = x + (y + z)   : by rw add_asoc
         ...         = x + (z + y)   : by rw add_com y
         ...         = (x + z) + y   : by rw add_asoc
 )
 
-lemma zero_sum {x y : natural}: x + y = 0 → x = 0 :=
+lemma zero_sum {x y : 𝐍}: x + y = 0 → x = 0 :=
     match y with
     | 0 := assume h, show x=0, by rw [←add_zero_ x, h]
     | (a+1) := assume h, (
@@ -195,12 +196,12 @@ lemma zero_sum {x y : natural}: x + y = 0 → x = 0 :=
     )
     end
 
-lemma add_unchanged_implies_zero {x y : natural}: x + y = y → x = 0 :=
+lemma add_unchanged_implies_zero {x y : 𝐍}: x + y = y → x = 0 :=
     natural.rec_on y (
         assume h : x + 0 = 0,
         show x = 0, by rw [←add_zero_ x, h]
     ) (
-        assume a : natural,
+        assume a : 𝐍,
         assume hr: x + a = a → x = 0,
         assume h: x + (a+1) = a+1,
         have (x + a)+1 = a+1, by rw [add_asoc x a 1, h],
@@ -209,21 +210,21 @@ lemma add_unchanged_implies_zero {x y : natural}: x + y = y → x = 0 :=
     )
 
 -- Now define multiplication
-def mult : natural → natural → natural
+def mult : 𝐍 → 𝐍 → 𝐍
     | a 0       := 0
     | a (b + 1) := a + (mult a b)
 
-instance natural_has_mult : has_mul natural := ⟨mult⟩
+instance natural_has_mult : has_mul 𝐍 := ⟨mult⟩
 
 
 -- And prove some useful results about multiplication
-lemma mult_zero (x : natural): x * 0 = 0 := by refl
+lemma mult_zero (x : 𝐍): x * 0 = 0 := by refl
 
-lemma zero_mult (x : natural): 0 * x = 0 :=
+lemma zero_mult (x : 𝐍): 0 * x = 0 :=
     natural.rec_on x (
-        show (0 : natural) * 0 = 0, by refl
+        show (0 : 𝐍) * 0 = 0, by refl
     ) (
-        assume n : natural,
+        assume n : 𝐍,
         assume h : 0 * n = 0,
         calc
             0 * (n + 1) = 0 + 0 * n : by refl
@@ -232,13 +233,13 @@ lemma zero_mult (x : natural): 0 * x = 0 :=
     )
 
 
-lemma mult_one (x : natural): x * 1 = x := by refl
+lemma mult_one (x : 𝐍): x * 1 = x := by refl
 
-lemma one_mult (x : natural): 1 * x = x :=
+lemma one_mult (x : 𝐍): 1 * x = x :=
     natural.rec_on x (
-        show (1 : natural) * 0 = 0, by refl
+        show (1 : 𝐍) * 0 = 0, by refl
     ) (
-        assume n : natural,
+        assume n : 𝐍,
         assume h : 1 * n = n,
         calc
             1 * (n + 1) = 1 + (1 * n)  : by refl
@@ -246,11 +247,11 @@ lemma one_mult (x : natural): 1 * x = x :=
             ...         = n + 1        : by rw add_com
     )
 
-lemma add_dist_mult (x y z : natural): (x + y) * z = (x * z) + (y * z) :=
+lemma add_dist_mult (x y z : 𝐍): (x + y) * z = (x * z) + (y * z) :=
     natural.rec_on z (
         show (x + y) * 0 = (x * 0) + (y * 0), by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: (x + y) * n = (x * n) + (y * n),
         calc
             (x + y) * (n + 1) = (x + y) + ((x + y) * n)        : by refl
@@ -258,11 +259,11 @@ lemma add_dist_mult (x y z : natural): (x + y) * z = (x * z) + (y * z) :=
             ...               = (x + (x * n)) + (y + (y * n))  : by rw [←add_asoc (x + y) (x * n), add_asoc x y, add_com y (x * n), ←add_asoc, add_asoc]
     )
 
-lemma mult_dist_add (x y z : natural): x * (y + z) = (x * y) + (x * z) :=
+lemma mult_dist_add (x y z : 𝐍): x * (y + z) = (x * y) + (x * z) :=
     natural.rec_on z (
         show x * (y + 0) = (x * y) + (x * 0), by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: x * (y + n) = (x * y) + (x * n),
         calc
             x * (y + (n + 1)) = x * ((y + n) + 1)        : by rw add_asoc
@@ -272,12 +273,12 @@ lemma mult_dist_add (x y z : natural): x * (y + z) = (x * y) + (x * z) :=
             ...               = (x * y) + (x * (n + 1))  : by refl
     )
 
-lemma mult_asoc (x y z : natural): (x * y) * z = x * (y * z) :=
+lemma mult_asoc (x y z : 𝐍): (x * y) * z = x * (y * z) :=
     natural.rec_on z (
         calc
             (x * y) * 0 = x * (y * 0)  : by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: (x * y) * n = x * (y * n),
         calc
             (x * y) * (n + 1) = (x * y) + ((x * y) * n)    : by refl
@@ -285,11 +286,11 @@ lemma mult_asoc (x y z : natural): (x * y) * z = x * (y * z) :=
             ...               = x * (y * (n + 1))          : by refl
     )
 
-lemma mult_com (x y : natural): x * y = y * x :=
+lemma mult_com (x y : 𝐍): x * y = y * x :=
     natural.rec_on x (
         show 0 * y = y * 0, by rw [zero_mult, mult_zero]
     ) (
-        assume n : natural,
+        assume n : 𝐍,
         assume h : n * y = y * n,
         calc
             (n + 1) * y = (y * n) + (y * 1)   : by rw [add_dist_mult, one_mult, h, mult_one]
@@ -297,16 +298,16 @@ lemma mult_com (x y : natural): x * y = y * x :=
     )
 
 -- equality is decidable
-lemma succ_ne_zero (n : natural): (n + 1) ≠ 0 :=
+lemma succ_ne_zero (n : 𝐍): (n + 1) ≠ 0 :=
     assume h : succ n = 0,
     natural.no_confusion h
 
-lemma zero_ne_succ (n : natural): 0 ≠ (n + 1) :=
+lemma zero_ne_succ (n : 𝐍): 0 ≠ (n + 1) :=
     assume h :  0 = succ n,
     natural.no_confusion h
 
 @[reducible]
-instance natural_decidable_eq: decidable_eq natural
+instance natural_decidable_eq: decidable_eq 𝐍
 | 0       0       := is_true (by refl)
 | (x + 1) 0       := is_false (succ_ne_zero x)
 | 0       (y + 1) := is_false (zero_ne_succ y)
@@ -320,7 +321,7 @@ instance natural_decidable_eq: decidable_eq natural
 -- in messages. It's primarily a convenience for the programmer.
 -- This is based on what's done for ℕ in the lean core library
 
-def digit_char (n: natural) : char :=
+def digit_char (n: 𝐍) : char :=
 if n = 0 then '0' else
 if n = 1 then '1' else
 if n = 2 then '2' else
@@ -339,7 +340,7 @@ if n = 0xe then 'e' else
 if n = 0xf then 'f' else
 '*'
 
-def digit_succ (b : natural): list natural → list natural
+def digit_succ (b : 𝐍): list 𝐍 → list 𝐍
 | [] := [1]
 | (d::ds) :=
     if (d+1) = b then
@@ -347,28 +348,28 @@ def digit_succ (b : natural): list natural → list natural
     else
         (d+1) :: ds
 
-def to_digits (b : natural): natural → list natural
+def to_digits (b : 𝐍): 𝐍 → list 𝐍
 | 0     := [0]
 | (n+1) := digit_succ b (to_digits n)
 
-def repr (n: natural): string :=
+def repr (n: 𝐍): string :=
     ((to_digits 10 n).map digit_char).reverse.as_string
 
-instance natural_has_repr: has_repr natural := ⟨repr⟩
+instance natural_has_repr: has_repr 𝐍 := ⟨repr⟩
 
 -- inequalities
-def le (x y : natural): Prop := ∃ z : natural, z + x = y
-instance natural_has_le: has_le natural := ⟨le⟩
+def le (x y : 𝐍): Prop := ∃ z : 𝐍, z + x = y
+instance natural_has_le: has_le 𝐍 := ⟨le⟩
 
-def lt (x y : natural): Prop := (x ≤ y) ∧ (x ≠ y)
-instance natural_has_lt: has_lt natural := ⟨lt⟩
+def lt (x y : 𝐍): Prop := (x ≤ y) ∧ (x ≠ y)
+instance natural_has_lt: has_lt 𝐍 := ⟨lt⟩
 
-lemma succ_le_succ {x y : natural}: x ≤ y → (x + 1) ≤ (y + 1) :=
+lemma succ_le_succ {x y : 𝐍}: x ≤ y → (x + 1) ≤ (y + 1) :=
     assume ⟨z, (h: z + x = y)⟩,
     suffices z + (x + 1) = y + 1, from ⟨z, this⟩,
     show z + (x + 1) = y + 1, by rw [←add_asoc z x 1, h]
 
-instance le_decidable: ∀ a b : natural, decidable (a ≤ b)
+instance le_decidable: ∀ a b : 𝐍, decidable (a ≤ b)
 | 0       y        := is_true ⟨y, by refl⟩
 | (x + 1) 0        := is_false (
     assume ⟨z, h⟩,
@@ -386,7 +387,7 @@ instance le_decidable: ∀ a b : natural, decidable (a ≤ b)
         )
     end
 
-instance lt_decidable: ∀ a b : natural, decidable (a < b) :=
+instance lt_decidable: ∀ a b : 𝐍, decidable (a < b) :=
 assume a b,
 match natural.natural_decidable_eq a b with
 | is_true h  := is_false (assume :a < b, absurd h this.right)
@@ -399,7 +400,7 @@ match natural.natural_decidable_eq a b with
 end
 
 
-lemma le_zero {x: natural}: x ≤ 0 → x = 0 :=
+lemma le_zero {x: 𝐍}: x ≤ 0 → x = 0 :=
     match x with
     | 0     := assume h, by refl
     | (a+1) := (
@@ -411,20 +412,20 @@ lemma le_zero {x: natural}: x ≤ 0 → x = 0 :=
     )
     end
 
-lemma zero_le (x:natural): 0 ≤ x :=
+lemma zero_le (x:𝐍): 0 ≤ x :=
     match x with
     | 0 := ⟨0, by refl⟩
     | (a+1) := ⟨a+1, add_zero_ (a+1)⟩
     end
 
-lemma le_refl (x: natural): x ≤ x := ⟨0, zero_add_ x⟩
+lemma le_refl (x: 𝐍): x ≤ x := ⟨0, zero_add_ x⟩
 
-lemma le_trans {x y z: natural}: x ≤ y → y ≤ z → x ≤ z :=
+lemma le_trans {x y z: 𝐍}: x ≤ y → y ≤ z → x ≤ z :=
     assume ⟨a, _⟩,
     assume ⟨b, _⟩,
     ⟨b+a, show b + a + x = z, by rw [add_asoc, ‹a + x = y›, ‹b + y = z›]⟩
 
-lemma lt_trans {x y z: natural}: x < y → y < z → x < z :=
+lemma lt_trans {x y z: 𝐍}: x < y → y < z → x < z :=
     assume hxy: x < y,
     assume hyz: y < z,
     suffices x ≠ z, from ⟨le_trans hxy.left hyz.left, this⟩,
@@ -448,7 +449,7 @@ lemma lt_trans {x y z: natural}: x < y → y < z → x < z :=
         )
     )
 
-lemma le_sym_implies_eq {x y :natural}: x ≤ y → y ≤ x → x = y :=
+lemma le_sym_implies_eq {x y :𝐍}: x ≤ y → y ≤ x → x = y :=
     assume ⟨a, _⟩,
     assume ⟨b, _⟩,
     suffices a = 0, from (
@@ -465,7 +466,7 @@ lemma le_sym_implies_eq {x y :natural}: x ≤ y → y ≤ x → x = y :=
         ...         = b + y         : by rw [‹a+x = y›]
         ...         = x             : by rw [‹b+y = x›]
 
-lemma le_implies_not_succ {x y : natural}: x ≤ y → x ≠ y+1 :=
+lemma le_implies_not_succ {x y : 𝐍}: x ≤ y → x ≠ y+1 :=
     assume h: x ≤ y,
     assume :x = y + 1,
     have y+1 ≤ y, from ‹x = y+1› ▸ ‹x ≤ y›,
@@ -476,19 +477,19 @@ lemma le_implies_not_succ {x y : natural}: x ≤ y → x ≠ y+1 :=
         absurd ‹z+1 = 0› ‹z+1 ≠ 0›
     )
 
-lemma nz_implies_succ {x : natural}: x ≠ 0 → ∃ y: natural, x = y+1 :=
+lemma nz_implies_succ {x : 𝐍}: x ≠ 0 → ∃ y: 𝐍, x = y+1 :=
     match x with
     | 0     := assume :0 ≠ 0, absurd (eq.refl 0) this
     | n + 1 := assume :n + 1 ≠ 0, ⟨n, eq.refl (n+1)⟩
     end
 
-lemma le_implies_lt_succ {x y: natural}: x ≤ y → x < y + 1 :=
+lemma le_implies_lt_succ {x y: 𝐍}: x ≤ y → x < y + 1 :=
     assume ⟨z, (h: z + x = y)⟩,
     suffices z + 1 + x = y + 1, from ⟨⟨z+1, this⟩, le_implies_not_succ ‹x ≤ y›⟩,
     suffices (z + x) + 1 = y + 1, by rw [add_asoc, add_com 1 x, ←add_asoc z x 1, this],
     show (z + x) + 1 = y + 1, from iff.elim_left succ_inj ‹z + x = y›
 
-lemma lt_succ_implies_le {x y: natural}: x < y+1 → x ≤ y :=
+lemma lt_succ_implies_le {x y: 𝐍}: x < y+1 → x ≤ y :=
     assume ⟨(hle: x ≤ y+1), hne⟩,
     let ⟨z, (h: z + x = y + 1)⟩ := hle in
         if hz: z = 0 then
@@ -503,7 +504,7 @@ lemma lt_succ_implies_le {x y: natural}: x < y+1 → x ≤ y :=
                     ...       = y + 1         : by rwa ←‹z = n+1›
             )
 
-lemma gt_implies_succ_gt {x y: natural}: x > y → x+1 > y :=
+lemma gt_implies_succ_gt {x y: 𝐍}: x > y → x+1 > y :=
     assume ⟨(_: y ≤ x), (_: y ≠ x)⟩,
     if h: y = (x+1)
     then
@@ -511,19 +512,19 @@ lemma gt_implies_succ_gt {x y: natural}: x > y → x+1 > y :=
     else
         ⟨(le_implies_lt_succ ‹y ≤ x›).left, ‹y ≠ x + 1›⟩
 
-lemma ne_succ (x: natural): x ≠ x+1 :=
+lemma ne_succ (x: 𝐍): x ≠ x+1 :=
     natural.rec_on x (
         assume h: 0 = 1,
         natural.no_confusion h
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: n ≠ n + 1,
         assume : (n+1) = (n+1) + 1,
         have n = n + 1, from (iff.elim_right succ_inj) this,
         absurd ‹n = n +1› ‹n ≠ n + 1›
     )
 
-lemma lt_implies_succ_le {x y: natural}: x < y → (x+1) ≤ y :=
+lemma lt_implies_succ_le {x y: 𝐍}: x < y → (x+1) ≤ y :=
     assume ⟨⟨z,(_:z+x=y)⟩,(_:x≠y)⟩,
     if h:z = 0 then
         have x = y, by rwa [←zero_add_ x, ←h],
@@ -535,11 +536,11 @@ lemma lt_implies_succ_le {x y: natural}: x < y → (x+1) ≤ y :=
             show n + (x + 1) = y, by rwa [add_com x, ←add_asoc n 1 x]
         )
 
-lemma succ_gt (x : natural): (x+1) > x := ⟨⟨1, add_com 1 x⟩, ne_succ x⟩
+lemma succ_gt (x : 𝐍): (x+1) > x := ⟨⟨1, add_com 1 x⟩, ne_succ x⟩
 
-lemma lt_succ (x : natural): x < (x+1) := succ_gt x
+lemma lt_succ (x : 𝐍): x < (x+1) := succ_gt x
 
-lemma le_iff_not_gt {x y: natural}: x ≤ y ↔ ¬ (x > y) :=
+lemma le_iff_not_gt {x y: 𝐍}: x ≤ y ↔ ¬ (x > y) :=
     iff.intro (
         assume : x≤y,
         assume ⟨(_:y ≤ x), (_: y ≠ x)⟩,
@@ -550,7 +551,7 @@ lemma le_iff_not_gt {x y: natural}: x ≤ y ↔ ¬ (x > y) :=
             assume h: ¬(0 > y),
             show 0 ≤ y, from zero_le y
         ) (
-            assume n: natural,
+            assume n: 𝐍,
             assume h: (¬n > y → n ≤ y),
             assume :¬(n+1 > y),
             suffices (n+1)≤y, from (add_one n) ▸ this,
@@ -567,23 +568,23 @@ lemma le_iff_not_gt {x y: natural}: x ≤ y ↔ ¬ (x > y) :=
 
 
 -- subtraction, of a sort
-def pred: natural → natural
+def pred: 𝐍 → 𝐍
 | 0       := 0
 | (a + 1) := a
 
-def sub:  natural → natural → natural
+def sub:  𝐍 → 𝐍 → 𝐍
 | a 0       := a
 | a (b + 1) := pred (sub a b)
 
-instance natural_has_sub: has_sub natural := ⟨sub⟩
+instance natural_has_sub: has_sub 𝐍 := ⟨sub⟩
 
-lemma sub_zero (x: natural): x - 0 = x := by refl
+lemma sub_zero (x: 𝐍): x - 0 = x := by refl
 
-lemma zero_sub (x: natural): 0 - x = 0 :=
+lemma zero_sub (x: 𝐍): 0 - x = 0 :=
     natural.rec_on x (
         by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: 0 - n = 0,
         calc
             0 - (n+1) = pred (0 - n)  : by refl
@@ -591,14 +592,14 @@ lemma zero_sub (x: natural): 0 - x = 0 :=
             ...       = 0             : by refl
     )
 
-lemma succ_sub_one (x: natural): (x+1) - 1 = x :=
+lemma succ_sub_one (x: 𝐍): (x+1) - 1 = x :=
 calc
     (x+1) - 1 = (x+1) - (0+1)     : by rw zero_add_
     ...       = pred ((x+1) - 0)  : by refl
     ...       = pred (x+1)        : by refl
     ...       = x                 : by refl
 
-lemma pred_zero {x : natural}: pred x = 0 → x ≠ 0 → x = 1 :=
+lemma pred_zero {x : 𝐍}: pred x = 0 → x ≠ 0 → x = 1 :=
     assume h: pred x = 0,
     assume hz: x ≠ 0,
     if hh: x = 0 then
@@ -613,14 +614,14 @@ lemma pred_zero {x : natural}: pred x = 0 → x ≠ 0 → x = 1 :=
                 ... = 1                 : by rw zero_add_
         )
 
-lemma succ_pred {x: natural}: x ≠ 0 → (pred x) + 1 = x :=
+lemma succ_pred {x: 𝐍}: x ≠ 0 → (pred x) + 1 = x :=
     assume h,
     let ⟨a, h⟩ := nz_implies_succ h in calc
         (pred x) + 1 = (pred (a+1)) + 1   : by rw h
         ...          = a + 1              : by refl
         ...          = x                  : by rw h
 
-lemma pred_add {x y: natural}: x ≠ 0 → (pred x) + y = pred (x + y) :=
+lemma pred_add {x y: 𝐍}: x ≠ 0 → (pred x) + y = pred (x + y) :=
     assume h: x ≠ 0,
     let ⟨a, (h: x = a+1)⟩ := nz_implies_succ h in (
         calc
@@ -631,9 +632,9 @@ lemma pred_add {x y: natural}: x ≠ 0 → (pred x) + y = pred (x + y) :=
             ...        = pred (x + y)     : by rw h
     )
 
-lemma eq_implies_le {x y: natural}: x = y → x ≤ y := assume h, ⟨0, h ▸ (zero_add_ x)⟩
+lemma eq_implies_le {x y: 𝐍}: x = y → x ≤ y := assume h, ⟨0, h ▸ (zero_add_ x)⟩
 
-lemma not_le {x y: natural}: ¬(x ≤ y) ↔ (y < x) :=
+lemma not_le {x y: 𝐍}: ¬(x ≤ y) ↔ (y < x) :=
     iff.intro (
         natural.rec_on y (
             assume h,
@@ -641,7 +642,7 @@ lemma not_le {x y: natural}: ¬(x ≤ y) ↔ (y < x) :=
             suffices 0 ≤ x, from ⟨this, ne.symm ‹x≠0›⟩,
             zero_le x
         ) (
-            assume a: natural,
+            assume a: 𝐍,
             assume hr: ¬x ≤ a → a < x,
             assume : ¬x ≤ a+1,
             have x ≠ a+1, from assume :x=a+1, absurd (eq_implies_le this) ‹¬x ≤ a+1›,
@@ -663,9 +664,9 @@ lemma not_le {x y: natural}: ¬(x ≤ y) ↔ (y < x) :=
             ... = b+a+y   : by rw add_asoc b a y
     )
 
-lemma not_lt {x y: natural}: ¬(x < y) ↔ (y ≤ x) := iff.trans (iff.symm (not_congr (@not_le y x))) (decidable.not_not_iff (y ≤ x))
+lemma not_lt {x y: 𝐍}: ¬(x < y) ↔ (y ≤ x) := iff.trans (iff.symm (not_congr (@not_le y x))) (decidable.not_not_iff (y ≤ x))
 
-lemma succ_le_implies_lt {x y: natural}:  (x+1) ≤ y → x < y :=
+lemma succ_le_implies_lt {x y: 𝐍}:  (x+1) ≤ y → x < y :=
     assume ⟨z, (h: z + (x+1) = y)⟩,
     have (z + 1) + x = y, by rw [add_asoc z, add_com 1, h],
     suffices x ≠ y, from ⟨⟨(z+1), ‹(z + 1) + x = y›⟩, this⟩,
@@ -673,12 +674,12 @@ lemma succ_le_implies_lt {x y: natural}:  (x+1) ≤ y → x < y :=
     have y < x+1, from hc ▸ lt_succ x,
     absurd ‹x+1 ≤ y› (iff.elim_right not_le ‹y < x+1›)
 
-lemma diff_zero_can_cancel {x y : natural}: x - y ≠ 0 → (x - y) + y = x :=
+lemma diff_zero_can_cancel {x y : 𝐍}: x - y ≠ 0 → (x - y) + y = x :=
     natural.rec_on y (
         assume h: x ≠ 0,
         by refl
     ) (
-        assume a: natural,
+        assume a: 𝐍,
         assume hr: x - a ≠ 0 → x - a + a = x,
         assume h: x - (a+1) ≠ 0,
         have x - (a+1) = pred (x - a), by refl,
@@ -698,7 +699,7 @@ lemma diff_zero_can_cancel {x y : natural}: x - y ≠ 0 → (x - y) + y = x :=
                 ...               = x                        : by assumption
     )
 
-lemma pred_nz {x: natural}: pred x ≠ 0 → x ≠ 0 :=
+lemma pred_nz {x: 𝐍}: pred x ≠ 0 → x ≠ 0 :=
     assume h: pred x ≠ 0,
     assume hc: x = 0,
     suffices pred x = 0, from absurd this h,
@@ -706,7 +707,7 @@ lemma pred_nz {x: natural}: pred x ≠ 0 → x ≠ 0 :=
         pred x = pred 0  : by rw hc
         ...    = 0       : by refl
 
-lemma diff_nz_succ_sub {x y: natural}: x - y ≠ 0 → (x+1) - y = (x - y) + 1 :=
+lemma diff_nz_succ_sub {x y: 𝐍}: x - y ≠ 0 → (x+1) - y = (x - y) + 1 :=
     natural.rec_on y (
         assume :x ≠ 0,
         by refl
@@ -724,7 +725,7 @@ lemma diff_nz_succ_sub {x y: natural}: x - y ≠ 0 → (x+1) - y = (x - y) + 1 :
             ...           = (x - (b+1)) + 1     : by refl
     )
 
-lemma diff_zero_of_successors {x y : natural}: (x+1) - (y+1) = 0 → x - y = 0 :=
+lemma diff_zero_of_successors {x y : 𝐍}: (x+1) - (y+1) = 0 → x - y = 0 :=
     assume h: pred ((x+1) - y) = 0,
     if hxy: x - y = 0 then
         hxy
@@ -735,16 +736,16 @@ lemma diff_zero_of_successors {x y : natural}: (x+1) - (y+1) = 0 → x - y = 0 :
             pred ((x+1) - y) = pred ((x - y) + 1)  : by rw hx1
             ...              = x - y               : by refl
 
-lemma both_diffs_zero_implies_equal {x : natural}: (∀ y : natural, x - y = 0 → y - x = 0 → x = y) :=
+lemma both_diffs_zero_implies_equal {x : 𝐍}: (∀ y : 𝐍, x - y = 0 → y - x = 0 → x = y) :=
     natural.rec_on x (
-        assume y: natural,
+        assume y: 𝐍,
         assume h1: 0-y=0,
         assume h2: y=0,
         eq.symm h2
     ) (
-        assume a: natural,
-        assume hr: ∀ (y : natural), a - y = 0 → y - a = 0 → a = y,
-        assume y: natural,
+        assume a: 𝐍,
+        assume hr: ∀ (y : 𝐍), a - y = 0 → y - a = 0 → a = y,
+        assume y: 𝐍,
         assume h1: (a+1) - y = 0,
         assume h2: y - (a+1) = 0,
         if hyz: y = 0 then
@@ -765,7 +766,7 @@ lemma both_diffs_zero_implies_equal {x : natural}: (∀ y : natural, x - y = 0 �
             )
     )
 
-lemma diff_zero {x y : natural}: x - y = 0 → x ≤ y :=
+lemma diff_zero {x y : 𝐍}: x - y = 0 → x ≤ y :=
     assume h: x - y = 0,
     if hi: y - x = 0 then
         have x = y, from both_diffs_zero_implies_equal y h hi,
@@ -775,19 +776,19 @@ lemma diff_zero {x y : natural}: x - y = 0 → x ≤ y :=
         diff_zero_can_cancel hi
 
 
-lemma lt_sub_nz {x y: natural}: x < y → y - x ≠ 0 :=
+lemma lt_sub_nz {x y: 𝐍}: x < y → y - x ≠ 0 :=
     assume h: x < y,
     assume hc: y - x = 0,
     suffices y ≤ x, from absurd this (iff.elim_right not_le h),
     diff_zero hc
 
 
-lemma sub_cancel_same {x y : natural}: y ≤ x → (x-y)+y = x :=
+lemma sub_cancel_same {x y : 𝐍}: y ≤ x → (x-y)+y = x :=
     natural.rec_on y (
         assume h: 0 ≤ x,
         by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume hr: n ≤ x → x - n + n = x,
         assume h: n+1 ≤ x,
         have x≠0, from assume :x=0,
@@ -802,15 +803,15 @@ lemma sub_cancel_same {x y : natural}: y ≤ x → (x-y)+y = x :=
             ...                 = x                         : by rw succ_pred ‹x≠0›
     )
 
-lemma lt_anti_sym {x y: natural}: x < y ↔ y > x :=
+lemma lt_anti_sym {x y: 𝐍}: x < y ↔ y > x :=
     iff.intro (assume ⟨h,g⟩, ⟨h,g⟩) (assume ⟨h,g⟩, ⟨h,g⟩)
 
-lemma succ_sub {x y: natural}: y ≤ x → (x+1) - y = (x - y) + 1 :=
+lemma succ_sub {x y: 𝐍}: y ≤ x → (x+1) - y = (x - y) + 1 :=
     natural.rec_on y (
         assume h,
         show (x+1) - 0 = x + 1, by refl
     ) (
-        assume a: natural,
+        assume a: 𝐍,
         assume h: a ≤ x → (x + 1) - a = (x - a) + 1,
         assume ⟨z,(_:z + (a+1) = x)⟩,
         have a ≤ x, from ⟨z+1, by rwa [add_asoc, add_com 1]⟩,
@@ -846,11 +847,11 @@ lemma succ_sub {x y: natural}: y ≤ x → (x+1) - y = (x - y) + 1 :=
             ...               = x - a             : by rw (succ_pred ‹x-a ≠ 0›)
     )
 
-lemma sub_self_zero (x: natural): x - x = 0 :=
+lemma sub_self_zero (x: 𝐍): x - x = 0 :=
     natural.rec_on x (
         by refl
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume h: n - n = 0,
         have n ≤ n, from le_refl n,
         calc
@@ -861,14 +862,14 @@ lemma sub_self_zero (x: natural): x - x = 0 :=
             ...           = 0                  : by refl
     )
 
-lemma le_sub_zero {x y: natural}: x ≤ y → x - y = 0 :=
+lemma le_sub_zero {x y: 𝐍}: x ≤ y → x - y = 0 :=
     natural.rec_on y (
         assume h,
         have x - 0 = x, by refl,
         suffices x = 0, from ‹x = 0› ▸ ‹x-0=x›,
         le_zero h
     ) (
-        assume n: natural,
+        assume n: 𝐍,
         assume hr: x ≤ n → x - n = 0,
         assume h: x ≤ n+1,
         if hh: x=n+1 then
@@ -883,38 +884,38 @@ lemma le_sub_zero {x y: natural}: x ≤ y → x - y = 0 :=
                 ...       = 0              : by refl
     )
 
-lemma diff_nz {x y : natural}: x - y ≠ 0 → y < x :=
+lemma diff_nz {x y : 𝐍}: x - y ≠ 0 → y < x :=
     assume h: x - y ≠ 0,
     if hle: x ≤ y then
         absurd (le_sub_zero hle) h
     else
         iff.elim_left not_le hle
 
-lemma succ_sub_self_one (x : natural): (x+1) - x = 1 :=
+lemma succ_sub_self_one (x : 𝐍): (x+1) - x = 1 :=
     calc
         (x+1) - x = (x - x) + 1  : by rw succ_sub (eq_implies_le (eq.refl x))
         ...       = 0 + 1        : by rw sub_self_zero
         ...       = 1            : by rw zero_add_
 
-lemma sub_nz_implies_anti_sum_zero {x y : natural}: x - y ≠ 0 → y - x = 0 :=
+lemma sub_nz_implies_anti_sum_zero {x y : 𝐍}: x - y ≠ 0 → y - x = 0 :=
     assume h: x - y ≠ 0,
     le_sub_zero (diff_nz h).left
 
-lemma le_implies_le_sum {x y z: natural}: x ≤ y → x ≤ z + y :=
+lemma le_implies_le_sum {x y z: 𝐍}: x ≤ y → x ≤ z + y :=
     assume ⟨a, (h: a+x = y)⟩,
     suffices z+a+x = z + y, from ⟨z+a, this⟩,
     calc
         z + a + x = z + (a + x)  : by rw add_asoc
         ...       = z + y        : by rw h
 
-lemma add_sub_asoc {x y z : natural}: natural.sub z y = 0 → x + (y - z) = (x + y) - z :=
+lemma add_sub_asoc {x y z : 𝐍}: natural.sub z y = 0 → x + (y - z) = (x + y) - z :=
     assume h: z - y = 0,
     natural.rec_on x (
         calc
             0 + (y - z) = y - z       : by rw zero_add_
             ...         = (0 + y) - z : by rw zero_add_
     ) (
-        assume a: natural,
+        assume a: 𝐍,
         assume hr: a + (y-z) = (a+y) - z,
         have z ≤ y, from diff_zero h,
         have z ≤ a+y, from le_implies_le_sum ‹z ≤ y›,
@@ -925,11 +926,11 @@ lemma add_sub_asoc {x y z : natural}: natural.sub z y = 0 → x + (y - z) = (x +
             ...           = ((a+1)+y) - z    : by simp
     )
 
-lemma add_cancel_right {x y z : natural}: x + y = z + y → x = z :=
+lemma add_cancel_right {x y z : 𝐍}: x + y = z + y → x = z :=
     natural.rec_on y (
         assume h, by assumption
     ) (
-        assume b: natural,
+        assume b: 𝐍,
         assume hr: x + b = z + b → x = z,
         assume h: x + (b+1) = z + (b+1),
         have h: (x + b) + 1 = (z + b) + 1, by rw [add_asoc x b 1, h, ←add_asoc z b 1],
@@ -937,12 +938,12 @@ lemma add_cancel_right {x y z : natural}: x + y = z + y → x = z :=
         show x = z, from hr h
     )
 
-lemma add_cancel_left {x y z: natural}: x + y = x + z → y = z :=
+lemma add_cancel_left {x y z: 𝐍}: x + y = x + z → y = z :=
     assume h: x + y = x + z,
     have h: y + x = z + x, by rw [←add_com x y, h, add_com x z],
     show y = z, from add_cancel_right h
 
-lemma le_add_cancel_left {x y z: natural}:  x + y ≤ x + z ↔ y ≤ z :=
+lemma le_add_cancel_left {x y z: 𝐍}:  x + y ≤ x + z ↔ y ≤ z :=
     iff.intro (
         assume ⟨a, (h: a + (x + y) = x + z)⟩,
         suffices a+y = z, from ⟨a, this⟩,
@@ -954,7 +955,7 @@ lemma le_add_cancel_left {x y z: natural}:  x + y ≤ x + z ↔ y ≤ z :=
         show a + (x + y) = x + z, by rw [add_com x y, ←add_asoc a y x, h, add_com z x]
     )
 
-lemma le_add_cancel_right {x y z: natural}:  x + y ≤ z + y ↔ x ≤ z :=
+lemma le_add_cancel_right {x y z: 𝐍}:  x + y ≤ z + y ↔ x ≤ z :=
     iff.intro (
         assume h: x + y ≤ z + y,
         have h: y + x ≤ y + z, from (add_com z y) ▸ (add_com x y) ▸ h,
@@ -964,7 +965,7 @@ lemma le_add_cancel_right {x y z: natural}:  x + y ≤ z + y ↔ x ≤ z :=
         (add_com y z) ▸ (add_com y x) ▸ (iff.elim_right le_add_cancel_left h)
     )
 
-lemma lt_add_cancel_left {x y z: natural}:  x + y < x + z ↔ y < z :=
+lemma lt_add_cancel_left {x y z: 𝐍}:  x + y < x + z ↔ y < z :=
     iff.intro (
         assume h: x + y < x + z,
         suffices y ≠ z, from ⟨iff.elim_left le_add_cancel_left h.left, this⟩,
@@ -979,7 +980,7 @@ lemma lt_add_cancel_left {x y z: natural}:  x + y < x + z ↔ y < z :=
         add_cancel_left hc
     )
 
-lemma lt_add_cancel_right {x y z: natural}:  x + y < z + y ↔ x < z :=
+lemma lt_add_cancel_right {x y z: 𝐍}:  x + y < z + y ↔ x < z :=
     iff.intro (
         assume h: x + y < z + y,
         have h: y + x < y + z, from (add_com z y) ▸ (add_com x y) ▸ h,
@@ -989,7 +990,7 @@ lemma lt_add_cancel_right {x y z: natural}:  x + y < z + y ↔ x < z :=
         (add_com y z) ▸ (add_com y x) ▸ (iff.elim_right lt_add_cancel_left h)
     )
 
-lemma sub_cancel_right (x y z: natural): (x+z) - (y+z) = x - y :=
+lemma sub_cancel_right (x y z: 𝐍): (x+z) - (y+z) = x - y :=
     if hxy: x - y = 0 then
         have h: x ≤ y, from diff_zero hxy,
         have h: x+z ≤ y+z, from iff.elim_right le_add_cancel_right h,
@@ -998,7 +999,7 @@ lemma sub_cancel_right (x y z: natural): (x+z) - (y+z) = x - y :=
         natural.rec_on z (
             by refl
         ) (
-            assume c: natural,
+            assume c: 𝐍,
             assume hr: (x + c) - (y + c) = x - y,
             have y < x, from diff_nz hxy,
             have y+c < x+c, from iff.elim_right lt_add_cancel_right ‹y < x›,
@@ -1011,11 +1012,11 @@ lemma sub_cancel_right (x y z: natural): (x+z) - (y+z) = x - y :=
                 ...                       = x - y                       : by assumption
         )
 
-lemma sub_of_sub (x y z: natural): (x-y)-z = x-(y+z) :=
+lemma sub_of_sub (x y z: 𝐍): (x-y)-z = x-(y+z) :=
     natural.rec_on z (
         by refl
     ) (
-        assume c: natural,
+        assume c: 𝐍,
         assume hr: x - y - c = x - (y + c),
         calc
             (x - y) - (c+1) = pred ((x - y) - c)  : by refl
@@ -1024,13 +1025,13 @@ lemma sub_of_sub (x y z: natural): (x-y)-z = x-(y+z) :=
     )
 
 
-lemma mult_nz {x y: natural}: x≠0 → y≠0 → (x*y)≠0 :=
+lemma mult_nz {x y: 𝐍}: x≠0 → y≠0 → (x*y)≠0 :=
     natural.rec_on y (
         assume hx,
         assume hy,
         absurd (eq.refl 0) hy
     ) (
-        assume b: natural,
+        assume b: 𝐍,
         assume hr: x ≠ 0 → b ≠ 0 → x * b ≠ 0,
         assume hx: x ≠ 0,
         assume hy: b+1 ≠ 0,
@@ -1038,7 +1039,7 @@ lemma mult_nz {x y: natural}: x≠0 → y≠0 → (x*y)≠0 :=
         absurd (zero_sum hc) hx
     )
 
-lemma mult_nz_eq_z_imp_z {x y : natural}: x*y = 0 → y ≠ 0 → x = 0 :=
+lemma mult_nz_eq_z_imp_z {x y : 𝐍}: x*y = 0 → y ≠ 0 → x = 0 :=
     assume h: x*y = 0,
     assume hy: y ≠ 0,
     if hx: x = 0 then
@@ -1053,18 +1054,18 @@ lemma mult_nz_eq_z_imp_z {x y : natural}: x*y = 0 → y ≠ 0 → x = 0 :=
             )
         )
 
-lemma mult_elim_right {x y z: natural}: y ≠ 0 → x*y = z*y → x = z :=
+lemma mult_elim_right {x y z: 𝐍}: y ≠ 0 → x*y = z*y → x = z :=
     assume hy: y ≠ 0,
-    suffices ∀ w: natural, x*y = w*y → x = w, from this z,
+    suffices ∀ w: 𝐍, x*y = w*y → x = w, from this z,
     natural.rec_on x (
-        assume w: natural,
+        assume w: 𝐍,
         assume h: 0*y = w*y,
         have h: w*y = 0, by rw [←h, zero_mult],
         eq.symm (mult_nz_eq_z_imp_z h hy)
     ) (
-        assume a: natural,
-        assume hr: ∀ (w : natural), a * y = w * y → a = w,
-        assume v: natural,
+        assume a: 𝐍,
+        assume hr: ∀ (w : 𝐍), a * y = w * y → a = w,
+        assume v: 𝐍,
         assume h: (a+1)*y = v*y,
         if hv: v=0 then
             have h: (a+1)*y = 0*y, from hv ▸ h,
@@ -1083,32 +1084,32 @@ lemma mult_elim_right {x y z: natural}: y ≠ 0 → x*y = z*y → x = z :=
             )
     )
 
-lemma ne_implies_lt_or_gt {x y: natural}: x ≠ y → x < y ∨ y < x :=
+lemma ne_implies_lt_or_gt {x y: 𝐍}: x ≠ y → x < y ∨ y < x :=
     assume hnz: x ≠ y,
     if hle: x ≤ y then
         or.intro_left _ ⟨hle, hnz⟩
     else
         or.intro_right _ (iff.elim_left not_le hle)
 
-lemma le_mult_cancel_right__forward {x y z: natural}: x ≤ y → x*z ≤ y*z :=
+lemma le_mult_cancel_right__forward {x y z: 𝐍}: x ≤ y → x*z ≤ y*z :=
     assume ⟨a, (h: a+x = y)⟩,
     suffices a*z + x*z = y*z, from ⟨a*z, this⟩,
     calc
         a*z + x*z = (a + x)*z  : by rw add_dist_mult
         ...       = y*z        : by rw h
 
-lemma mult_cancel_right {x y z: natural}: z ≠ 0 → x*z = y*z → x = y :=
+lemma mult_cancel_right {x y z: 𝐍}: z ≠ 0 → x*z = y*z → x = y :=
     assume hz: z ≠ 0,
-    suffices ∀ b: natural, x*z = b*z → x = b, from this y,
+    suffices ∀ b: 𝐍, x*z = b*z → x = b, from this y,
     natural.rec_on x (
-        assume y : natural,
+        assume y : 𝐍,
         assume h: 0*z = y*z,
         have h: y*z = 0, by rw [←h, zero_mult z],
         eq.symm (mult_nz_eq_z_imp_z h hz)
     ) (
-        assume a: natural,
-        assume hr:  ∀ (b : natural), a * z = b * z → a = b,
-        assume y: natural,
+        assume a: 𝐍,
+        assume hr:  ∀ (b : 𝐍), a * z = b * z → a = b,
+        assume y: 𝐍,
         assume h: (a+1) * z = y * z,
         if hy: y=0 then
             have h: (a+1) * z = 0, by rw [h, hy, zero_mult],
@@ -1130,14 +1131,14 @@ lemma mult_cancel_right {x y z: natural}: z ≠ 0 → x*z = y*z → x = y :=
             )
     )
 
-lemma lt_mult_cancel_right__forward {x y z: natural}: z ≠ 0 → x < y → x*z < y*z :=
+lemma lt_mult_cancel_right__forward {x y z: 𝐍}: z ≠ 0 → x < y → x*z < y*z :=
     assume hz: z ≠ 0,
     assume ⟨hle, hne⟩,
     suffices x*z ≠ y*z, from ⟨le_mult_cancel_right__forward hle, this⟩,
     assume hc: x*z = y*z,
     absurd (mult_cancel_right hz hc) hne
 
-lemma le_mult_cancel_right {x y z: natural}: (x ≤ y ∨ z = 0) ↔ x*z ≤ y*z :=
+lemma le_mult_cancel_right {x y z: 𝐍}: (x ≤ y ∨ z = 0) ↔ x*z ≤ y*z :=
     iff.intro (
         assume h,
         or.elim h (
@@ -1164,7 +1165,7 @@ lemma le_mult_cancel_right {x y z: natural}: (x ≤ y ∨ z = 0) ↔ x*z ≤ y*z
                 absurd h (iff.elim_right not_le hc)
     )
 
-lemma lt_mult_cancel_right {x y z: natural}: (x<y ∧ z≠0) ↔ x*z < y*z :=
+lemma lt_mult_cancel_right {x y z: 𝐍}: (x<y ∧ z≠0) ↔ x*z < y*z :=
     iff.intro (
         assume ⟨hlt, hz⟩,
         lt_mult_cancel_right__forward hz hlt
@@ -1184,10 +1185,10 @@ lemma lt_mult_cancel_right {x y z: natural}: (x<y ∧ z≠0) ↔ x*z < y*z :=
             absurd h hc
     )
 
-lemma sub_dist_mult {x y z: natural}: y ≤ x → (x - y)*z = x*z - y*z :=
+lemma sub_dist_mult {x y z: 𝐍}: y ≤ x → (x - y)*z = x*z - y*z :=
     assume h: y ≤ x,
     natural.rec_on z (by refl) (
-        assume c: natural,
+        assume c: 𝐍,
         assume hr: (x - y) * c = x * c - y * c,
         have y - x = 0, from le_sub_zero h,
         have y*c ≤ x*c, from iff.elim_left le_mult_cancel_right (or.intro_left _ h),

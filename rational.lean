@@ -33,7 +33,7 @@ import .integer
 
 -- Here we go! Fractions!
 
-structure int_nat_pair := (n: integer) (d: natural)
+structure int_nat_pair := (n: 𝐙) (d: 𝐍)
 
 def fraction := {x: int_nat_pair // (x.d ≠ 0)}
 
@@ -222,6 +222,7 @@ end fraction
 
 def rational: Type := quotient fraction.fraction_setoid
 
+notation `𝐐` := rational
 
 namespace rational
 
@@ -229,10 +230,10 @@ open rational
 
 notation n `÷` d := ⟦⟨⟨n, d⟩, (assume h, natural.no_confusion h)⟩⟧
 
-instance has_coe_integer_rational: has_coe integer rational := ⟨assume n: integer, (n ÷ 1)⟩
+instance has_coe_integer_rational: has_coe integer rational := ⟨assume n: 𝐙, (n ÷ 1)⟩
 
-def zero : rational := ↑(0: natural)
-def one  : rational := ↑(1: natural)
+def zero : 𝐐 := ↑(0: 𝐍)
+def one  : 𝐐 := ↑(1: 𝐍)
 
 instance rational_has_zero: has_zero rational := ⟨zero⟩
 instance rational_has_one: has_one rational := ⟨one⟩
@@ -257,37 +258,37 @@ iff.intro (
 
 -- addition
 
-def add (x y: rational): rational := quotient.lift_on₂ x y (λ f g: fraction, ⟦f + g⟧) fraction.add_invariant
+def add (x y: 𝐐): 𝐐 := quotient.lift_on₂ x y (λ f g: fraction, ⟦f + g⟧) fraction.add_invariant
 instance rational_has_add: has_add rational := ⟨add⟩
 instance rational_has_add_: has_add (quotient fraction.fraction_setoid) := ⟨add⟩
 
-lemma add_asoc (x y z: rational): (x + y) + z = x + (y + z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a+b)+c⟧ = ⟦a+(b+c)⟧, by rw fraction.add_asoc)
-lemma add_com (x y: rational): x + y = y + x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a+b⟧ = ⟦b+a⟧, by rw fraction.add_com)
+lemma add_asoc (x y z: 𝐐): (x + y) + z = x + (y + z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a+b)+c⟧ = ⟦a+(b+c)⟧, by rw fraction.add_asoc)
+lemma add_com (x y: 𝐐): x + y = y + x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a+b⟧ = ⟦b+a⟧, by rw fraction.add_com)
 
 -- negation
 
-def neg (x :rational): rational := quotient.lift_on x (λ f:fraction, ⟦-f⟧) fraction.neg_invariant
+def neg (x : 𝐐): 𝐐 := quotient.lift_on x (λ f:fraction, ⟦-f⟧) fraction.neg_invariant
 instance rational_has_neg: has_neg rational := ⟨neg⟩
 
-lemma neg_neg (x :rational): -(-x) = x := quotient.induction_on x (assume a: fraction, show ⟦-(-a)⟧ = ⟦a⟧, by rw fraction.neg_neg)
+lemma neg_neg (x : 𝐐): -(-x) = x := quotient.induction_on x (assume a: fraction, show ⟦-(-a)⟧ = ⟦a⟧, by rw fraction.neg_neg)
 
 -- subtraction
 
-def sub (x y: rational): rational := x + -y
+def sub (x y: 𝐐): 𝐐 := x + -y
 
 -- multiplication
 
-def mult (x y: rational): rational := quotient.lift_on₂ x y (λ f g: fraction, ⟦f*g⟧) fraction.mult_invariant
+def mult (x y: 𝐐): 𝐐 := quotient.lift_on₂ x y (λ f g: fraction, ⟦f*g⟧) fraction.mult_invariant
 instance rational_has_mult: has_mul rational := ⟨mult⟩
 
-lemma mult_asoc (x y z: rational): (x*y)*z = x*(y*z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a*b)*c⟧ = ⟦a*(b*c)⟧, by rw fraction.mult_asoc)
-lemma mult_com (x y: rational): x*y = y*x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a*b⟧ = ⟦b*a⟧, by rw fraction.mult_com)
+lemma mult_asoc (x y z: 𝐐): (x*y)*z = x*(y*z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a*b)*c⟧ = ⟦a*(b*c)⟧, by rw fraction.mult_asoc)
+lemma mult_com (x y: 𝐐): x*y = y*x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a*b⟧ = ⟦b*a⟧, by rw fraction.mult_com)
 
 -- inverse
 
-private def inv_frac_rat (a: fraction) :rational :=
+private def inv_frac_rat (a: fraction) : 𝐐 :=
 if h: a.n = 0 then
-    (0: rational)
+    (0: 𝐐)
 else
     ⟦(fraction.inv ⟨a, h⟩).val⟧
 
@@ -331,12 +332,12 @@ else
         ...            = ⟦(fraction.inv ⟨b, hb⟩).val⟧  : by rw quotient.sound hs
         ...            = inv_frac_rat b                : by rw inv_frac_rat_nz b hb
 
-def non_zero_rational := {f: rational // (f ≠ 0)}
+def non_zero_rational := {f: 𝐐 // (f ≠ 0)}
 def inv (x: non_zero_rational): non_zero_rational :=
 ⟨quotient.lift_on x.val inv_frac_rat inv_frac_rat_invariant,
 (
-    suffices ∀ a : rational, a ≠ 0 → quotient.lift_on (a) inv_frac_rat inv_frac_rat_invariant ≠ 0, from this x.val x.property,
-    assume a: rational,
+    suffices ∀ a : 𝐐, a ≠ 0 → quotient.lift_on (a) inv_frac_rat inv_frac_rat_invariant ≠ 0, from this x.val x.property,
+    assume a: 𝐐,
     quotient.induction_on a (
         assume f: fraction,
         assume h: ⟦f⟧ ≠ 0,

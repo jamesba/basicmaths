@@ -171,6 +171,16 @@ lemma neg_neg (x: fraction): -(-x) = x :=
     suffices (-(-x)).n = x.n, from fraction.eq this rfl,
     show -(-x.n) = x.n, by rw ←integer.neg_neg x.n
 
+#check integer.to_UnitRing.mul_one
+
+lemma neg_add (x: fraction): -x + x ≈ ⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ :=
+calc
+    ((-(x.n))*↑x.d + x.n*↑x.d)*1  = (-(x.n))*↑x.d + x.n*↑x.d      : by rw integer.to_UnitRing.mul_one
+    ...                           = (-(x.n) + x.n)*↑x.d           : by rw ←integer.to_Ring.add_mul
+    ...                           = (0)*↑x.d                      : by rw integer.to_Ring.neg_add
+    ...                           = 0                             : by rw integer.to_Ring.zero_mul
+    ...                           = 0*(-x + x).d                  : by rw integer.to_Ring.zero_mul
+
 def mult (x y: fraction): fraction := ⟨⟨x.n * y.n, x.d * y.d⟩, natural.mult_nz x.nz y.nz⟩
 instance fraction_has_mult: has_mul fraction := ⟨mult⟩
 
@@ -217,6 +227,10 @@ lemma inv_invariant {x y: non_zero_fraction}: x.val ≈ y.val → (inv x).val �
         ...                         = (integer.sgn y.val.n * y.val.d) * integer.abs x.val.n  : by rw [←integer.mul_asoc, ←integer.mul_com (y.val.d), integer.mul_asoc]
         ...                         = (inv y).val.n*(inv x).val.d                            : by refl
 
+def over_one (x: 𝐙): fraction := ⟨⟨x, 1⟩, assume h, natural.no_confusion h⟩
+
+lemma int_mult (a: 𝐙) (y: fraction): (over_one a) * y = ⟨⟨a*y.n, y.d⟩, y.nz⟩ := show (⟨⟨a*y.n, 1*y.d⟩, natural.mult_nz (assume h, natural.no_confusion h) (y.nz)⟩ : fraction) = ⟨⟨a*y.n, y.d⟩, y.nz⟩, from fraction.eq (rfl) (natural.one_mult y.d)
+
 end fraction
 
 
@@ -232,8 +246,8 @@ notation n `÷` d := ⟦⟨⟨n, d⟩, (assume h, natural.no_confusion h)⟩⟧
 
 instance has_coe_integer_rational: has_coe integer rational := ⟨assume n: 𝐙, (n ÷ 1)⟩
 
-def zero : 𝐐 := ↑(0: 𝐍)
-def one  : 𝐐 := ↑(1: 𝐍)
+def zero : 𝐐 := ↑(0: 𝐙)
+def one  : 𝐐 := ↑(1: 𝐙)
 
 instance rational_has_zero: has_zero rational := ⟨zero⟩
 instance rational_has_one: has_one rational := ⟨one⟩
@@ -244,7 +258,9 @@ instance rational_has_one_: has_one (quotient fraction.fraction_setoid) := ⟨on
 instance rational_of_fraction_decidable_equality (x y : fraction): decidable (⟦x⟧ = ⟦y⟧) :=
     if h: x ≈ y then is_true (quotient.sound h) else is_false (mt quotient.exact h)
 
-lemma eq_zero (x: fraction): ⟦x⟧ = 0 ↔ x.n = 0 :=
+protected lemma eq {x y: fraction} (h: x.n*y.d = y.n*x.d): ⟦x⟧ = ⟦y⟧ := suffices x ≈ y, from quotient.sound this, h
+
+lemma eq_zero {x: fraction}: ⟦x⟧ = 0 ↔ x.n = 0 :=
 iff.intro (
     assume h: ⟦x⟧ = 0,
     have h: x ≈ ⟨⟨0, 1⟩, (assume h, natural.no_confusion h)⟩, from quotient.exact h,
@@ -256,6 +272,13 @@ iff.intro (
     show x.n*1 = 0*x.d, by rw [integer.mult_one, h, integer.zero_mult]
 )
 
+lemma zero_ne_one: rational.zero ≠ rational.one :=
+    assume h: (0 : rational) = ⟦⟨⟨1, 1⟩, assume h, natural.no_confusion h⟩⟧,
+    have h: fraction.n (⟨⟨1, 1⟩, assume h, natural.no_confusion h⟩ : fraction) = 0, from iff.elim_left eq_zero (eq.symm h),
+    have h: (1 : 𝐙) = 0, from h,
+    have h: (1 : 𝐍) = 0, by injection h,
+    natural.no_confusion h
+
 -- addition
 
 def add (x y: 𝐐): 𝐐 := quotient.lift_on₂ x y (λ f g: fraction, ⟦f + g⟧) fraction.add_invariant
@@ -264,6 +287,23 @@ instance rational_has_add_: has_add (quotient fraction.fraction_setoid) := ⟨ad
 
 lemma add_asoc (x y z: 𝐐): (x + y) + z = x + (y + z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a+b)+c⟧ = ⟦a+(b+c)⟧, by rw fraction.add_asoc)
 lemma add_com (x y: 𝐐): x + y = y + x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a+b⟧ = ⟦b+a⟧, by rw fraction.add_com)
+lemma zero_add (x: 𝐐): 0 + x = x := quotient.induction_on x (
+    assume ⟨⟨n, d⟩, hnz⟩,
+    suffices (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction) ≈ ⟨⟨n, d⟩, hnz⟩, from quotient.sound this,
+    suffices (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction) = ⟨⟨n, d⟩, hnz⟩, from (eq.symm this) ▸ (fraction.equiv_refl ⟨⟨n, d⟩, hnz⟩),
+    suffices (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction).n = n ∧ (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction).d = d, from fraction.eq this.left this.right,
+    and.intro (
+        calc
+            (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction).n = 0*d + n*1  : by refl
+            ...                                                                       = 0 + n*1    : by rw integer.to_Ring.zero_mul
+            ...                                                                       = n*1        : by rw integer.to_Ring.zero_add
+            ...                                                                       = n          : by rw integer.to_UnitRing.mul_one
+    ) (
+        calc
+            (⟨⟨0, 1⟩, assume h, natural.no_confusion h⟩ + ⟨⟨n, d⟩, hnz⟩ : fraction).d = 1*d  : by refl
+            ...                                                                       = d    : by rw natural.one_mult
+    )
+)
 
 -- negation
 
@@ -271,6 +311,11 @@ def neg (x : 𝐐): 𝐐 := quotient.lift_on x (λ f:fraction, ⟦-f⟧) fractio
 instance rational_has_neg: has_neg rational := ⟨neg⟩
 
 lemma neg_neg (x : 𝐐): -(-x) = x := quotient.induction_on x (assume a: fraction, show ⟦-(-a)⟧ = ⟦a⟧, by rw fraction.neg_neg)
+lemma neg_add (x : 𝐐): -x + x = 0 := quotient.induction_on x (
+    assume a: fraction,
+    suffices -a + a ≈ ⟨⟨0, 1⟩, (assume h, natural.no_confusion h)⟩, from quotient.sound this,
+    fraction.neg_add a
+)
 
 -- subtraction
 
@@ -280,9 +325,51 @@ def sub (x y: 𝐐): 𝐐 := x + -y
 
 def mult (x y: 𝐐): 𝐐 := quotient.lift_on₂ x y (λ f g: fraction, ⟦f*g⟧) fraction.mult_invariant
 instance rational_has_mult: has_mul rational := ⟨mult⟩
+instance rational_has_mult_: has_mul (quotient fraction.fraction_setoid) := ⟨mult⟩
 
 lemma mult_asoc (x y z: 𝐐): (x*y)*z = x*(y*z) := quotient.induction_on₃ x y z (assume a b c: fraction, show ⟦(a*b)*c⟧ = ⟦a*(b*c)⟧, by rw fraction.mult_asoc)
 lemma mult_com (x y: 𝐐): x*y = y*x := quotient.induction_on₂ x y (assume a b: fraction, show ⟦a*b⟧ = ⟦b*a⟧, by rw fraction.mult_com)
+
+lemma one_mult (x: 𝐐): 1*x = x := quotient.induction_on x (
+    assume y,
+    show ⟦(fraction.over_one 1) * y⟧ = ⟦y⟧, from
+    suffices (⟦⟨⟨1*y.n, y.d⟩, y.nz⟩⟧ : rational) = ⟦y⟧, from calc
+        ⟦(fraction.over_one 1) * y⟧ = ⟦⟨⟨1*y.n, y.d⟩, y.nz⟩⟧ : by rw ←fraction.int_mult 1
+        ...                        =  ⟦y⟧  : by rw this
+    ,
+    rational.eq (
+        show 1 * y.n * y.d = y.n * y.d, by rw integer.to_UnitRing.one_mul
+    )
+)
+lemma mult_add (x y z: 𝐐): z*(x + y) = z*x + z*y := quotient.induction_on₃ x y z (
+    assume a b c : fraction,
+    show ⟦c * (a + b)⟧ = ⟦c*a + c*b⟧, from
+    suffices (c* (a + b)).n * (c*a + c*b).d = (c*a + c*b).n * (c* (a + b)).d, from rational.eq this,
+    calc
+        (c* (a + b)).n * (c*a + c*b).d = (c.n * (a.n*b.d + b.n*a.d)) * ((c.d*a.d)*(c.d*b.d))         : by refl
+        ...                            = (c.n*(a.n*b.d) + c.n*(b.n*a.d)) * ((c.d*a.d)*(c.d*b.d))     : by rw Ring.mul_add
+        ...                            = ((c.n*a.n)*b.d + (c.n*b.n)*a.d) * ((c.d*a.d)*(c.d*b.d))     : by rw [Ring.mul_assoc 𝐙 c.n, Ring.mul_assoc 𝐙 c.n]
+        ...                            = (((c.n*a.n)*b.d + (c.n*b.n)*a.d) * c.d)*(a.d*(c.d*b.d))     : by rw [Ring.mul_assoc 𝐙 c.d, Ring.mul_assoc 𝐙 ((c.n*a.n)*b.d + (c.n*b.n)*a.d)]
+        ...                            = ((c.n*a.n)*b.d*c.d + (c.n*b.n)*a.d*c.d)*(a.d*(c.d*b.d))     : by rw [Ring.add_mul]
+        ...                            = ((c.n*a.n)*(b.d*c.d) + (c.n*b.n)*(a.d*c.d))*(a.d*(c.d*b.d)) : by rw [Ring.mul_assoc 𝐙, Ring.mul_assoc 𝐙 (c.n*b.n)]
+        ...                            = ((c.n*a.n)*(c.d*b.d) + (c.n*b.n)*(c.d*a.d))*(a.d*(c.d*b.d)) : by rw [CommRing.mul_comm 𝐙 b.d, CommRing.mul_comm 𝐙 a.d]
+        ...                            = ((c*a).n*(c*b).d + (c*b).n*(c*a).d)*(a.d*(c.d*b.d))         : by refl
+        ...                            = (c*a + c*b).n*(a.d*(c.d*b.d))                               : by refl
+        ...                            = (c*a + c*b).n*((a.d*c.d)*b.d)                               : by rw [Ring.mul_assoc 𝐙]
+        ...                            = (c*a + c*b).n*((c.d*a.d)*b.d)                               : by rw [CommRing.mul_comm 𝐙 a.d]
+        ...                            = (c*a + c*b).n*(c.d*(a.d*b.d))                               : by rw [Ring.mul_assoc 𝐙]
+        ...                            = (c*a + c*b).n * (c* (a + b)).d                              : by refl
+)
+lemma no_zero_divisors (x y : 𝐐): x*y = 0 → x ≠ 0 → y = 0 := quotient.induction_on₂ x y (
+    assume a b : fraction,
+    assume h: ⟦a * b⟧ = 0,
+    assume ha: ⟦a⟧ ≠ 0,
+    have h: (a * b).n = 0, from iff.elim_left eq_zero h,
+    have h: a.n * b.n = 0, from h,
+    have ha: a.n ≠ 0, from (mt (iff.elim_right eq_zero)) ha,
+    suffices b.n = 0, from iff.elim_right eq_zero this,
+    integer.to_NZDRing.no_zero_divisors h ha
+)
 
 -- inverse
 
@@ -332,31 +419,59 @@ else
         ...            = ⟦(fraction.inv ⟨b, hb⟩).val⟧  : by rw quotient.sound hs
         ...            = inv_frac_rat b                : by rw inv_frac_rat_nz b hb
 
-def non_zero_members (α : Type) [has_zero α]: Type := {a:α // a ≠ 0 }
+def inv (x: 𝐐): 𝐐 := quotient.lift_on x (λ f, inv_frac_rat f) inv_frac_rat_invariant
+instance: has_inv 𝐐 := ⟨inv⟩
 
-postfix `ˣ`:1025 := non_zero_members
+lemma inv_nz_is_nz {x: 𝐐}: x ≠ 0 → x⁻¹ ≠ 0 := quotient.induction_on x (
+    assume a: fraction,
+    assume ha: ⟦a⟧ ≠ 0,
+    have ha: a.n ≠ 0, from mt (iff.elim_right eq_zero) ha,
+    show inv_frac_rat a ≠ 0, from
+    suffices ⟦(fraction.inv ⟨a, ha⟩).val⟧ ≠ 0, from eq.symm (inv_frac_rat_nz a ha) ▸ this,
+    suffices (fraction.inv ⟨a, ha⟩).val.n ≠ 0, from mt (iff.elim_left eq_zero) this,
+    assume hc: ((fraction.inv ⟨a, ha⟩).val).n = 0,
+    suffices (a.d : 𝐍) = 0, from absurd this a.nz,
+    suffices (a.d : 𝐙) = 0, by injection this,
+    have hc: (integer.sgn a.n) * a.d = 0, from hc,
+    have integer.sgn a.n ≠ 0, from mt (iff.elim_right integer.sgn_zero) ha,
+    integer.to_NZDRing.no_zero_divisors hc ‹integer.sgn a.n ≠ 0›
+)
 
-def inv (x: 𝐐ˣ): 𝐐ˣ :=
-⟨quotient.lift_on x.val inv_frac_rat inv_frac_rat_invariant,
-(
-    suffices ∀ a : 𝐐, a ≠ 0 → quotient.lift_on (a) inv_frac_rat inv_frac_rat_invariant ≠ 0, from this x.val x.property,
-    assume a: 𝐐,
-    quotient.induction_on a (
-        assume f: fraction,
-        assume h: ⟦f⟧ ≠ 0,
-        have hn: f.n ≠ 0, from iff.elim_left (not_congr (eq_zero f)) h,
-        assume hc: quotient.lift_on ⟦f⟧ inv_frac_rat inv_frac_rat_invariant = 0,
-        have hc: inv_frac_rat f = 0, from hc,
-        have h: inv_frac_rat f = ⟦(fraction.inv ⟨f, hn⟩).val⟧, by rw inv_frac_rat_nz f hn,
-        have h: ⟦(fraction.inv ⟨f, hn⟩).val⟧ = 0, from h ▸ hc,
-        have h: (fraction.inv ⟨f, hn⟩).val.n = 0, from iff.elim_left (eq_zero (fraction.inv ⟨f, hn⟩).val) h,
-        have h: integer.sgn f.n * f.d = 0, from h,
-        have h: integer.sgn f.n = 0, from integer.mult_nz_eq_z_imp_z h (integer.nz_impl_coe_nz f.nz),
-        have h: f.n = 0, from iff.elim_right integer.sgn_zero h,
-        absurd h hn
-    )
-)⟩
+lemma inv_mul {x: 𝐐}: x ≠ 0 → x⁻¹ * x = 1 := quotient.induction_on x (
+    assume a: fraction,
+    assume ha: ⟦a⟧ ≠ 0,
+    have ha: a.n ≠ 0, from mt (iff.elim_right eq_zero) ha,
+    show inv_frac_rat a * ⟦a⟧ = 1, from
+    suffices ⟦(fraction.inv ⟨a, ha⟩).val⟧ * ⟦a⟧ = (1 : 𝐐), by rw [inv_frac_rat_nz, this],
+    suffices ⟦(fraction.inv ⟨a, ha⟩).val * a⟧ = (1 : 𝐐), from this,
+    suffices ((fraction.inv ⟨a, ha⟩).val * a).n*1 = 1*((fraction.inv ⟨a, ha⟩).val * a).d, from rational.eq this,
+    calc
+        ((fraction.inv ⟨a, ha⟩).val * a).n*1 = ((fraction.inv ⟨a, ha⟩).val * a).n                             : by rw integer.to_UnitRing.mul_one
+        ...                                  = ((fraction.inv ⟨a, ha⟩).val).n * a.n                           : by refl
+        ...                                  = (integer.sgn a.n * a.d) * a.n                                  : by refl
+        ...                                  = (integer.sgn a.n * a.d) * (integer.sgn a.n * integer.abs a.n)  : by rw integer.sgn_mult_abs
+        ...                                  = (integer.sgn a.n * integer.sgn a.n) * (integer.abs a.n * a.d)  : by rw [Ring.mul_assoc, CommRing.mul_comm 𝐙 a.d, Ring.mul_assoc, Ring.mul_assoc]
+        ...                                  = 1 * (integer.abs a.n * a.d)                                    : by rw integer.sgn_mult_sgn ha
+)
 
-instance nzrational_has_inv: has_inv 𝐐ˣ := ⟨inv⟩
+instance rational_decidable_equal: decidable_eq 𝐐 := quotient.decidable_eq
+
+-- 𝐐 is a field
+def to_Field: Field 𝐐 :=
+{
+    is_set := assume x y, if h:x = y then or.intro_left _ h else or.intro_right _ h,
+    add_assoc := add_asoc,
+    add_comm := add_com,
+    left_zero := zero_add,
+    left_neg := neg_add,
+    mul_assoc := mult_asoc,
+    mul_comm := mult_com,
+    left_distrib := mult_add,
+    left_one := one_mult,
+    nzd := no_zero_divisors,
+    inv_nz_is_nz := @inv_nz_is_nz,
+    left_inv := @inv_mul,
+    zero_ne_one := zero_ne_one,
+}
 
 end rational

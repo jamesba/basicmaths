@@ -11,13 +11,14 @@ def LeftDistrib {α: Type} (add: α → α → α) (mul: α → α → α) := �
 def RightDistrib {α: Type} (add: α → α → α) (mul: α → α → α) := ∀ a b c : α, mul (add a b) c = add (mul a c) (mul b c)
 def NoZeroDivisors (α: Type) [has_add α] [has_mul α] [has_zero α] := ∀ a b : α, a * b = 0 → a ≠ 0 → b = 0
 def NonZero (α: Type) [has_zero α]: Type := {a: α // a ≠ 0}
+def ExcludedMiddle (α: Type) := ∀ a b : α, a = b ∨ a ≠ b
 
 postfix `ˣ`:1025 := NonZero
 
 def NZLeftInverse {α: Type} (zero: α) (one: α) (mul: α → α → α) (inv : α → α) := ∀ a : α, (a ≠ zero → mul (inv a) a = one)
 
 class Ring (α: Type) extends has_zero α, has_add α, has_neg α, has_mul α:=
-(is_set: decidable_eq α)
+(is_set: ExcludedMiddle α)
 (add_assoc: Associative add)
 (add_comm: Commutative add)
 (left_zero: LeftIdentity add 0)
@@ -27,7 +28,6 @@ class Ring (α: Type) extends has_zero α, has_add α, has_neg α, has_mul α:=
 (right_distrib: RightDistrib add mul)
 
 instance RingHasSub {α: Type} [r: Ring α]: has_sub α := ⟨λ a b : α, a + -b⟩
-instance RingHasDecidableEquality {α : Type} [r: Ring α]: decidable_eq α := r.is_set
 
 -- Given a Ring we can also construct subrings
 
@@ -41,7 +41,7 @@ structure SubRing { α : Type} (r: Ring α) (p : α → Prop) :=
 -- This lets us construct a Commutative Ring
 
 class CommRing (α: Type) extends has_zero α, has_add α, has_neg α, has_mul α :=
-(is_set: decidable_eq α)
+(is_set: ExcludedMiddle α)
 (add_assoc: Associative add)
 (add_comm: Commutative add)
 (left_zero: LeftIdentity add 0)
@@ -197,6 +197,9 @@ lemma add_zero (a : α): a + 0 = a := by rw [r.add_comm, r.zero_add]
 lemma neg_add (a : α): -a + a = 0 := Ring.left_neg α a
 lemma add_neg (a : α): a  + -a = 0 := by rw [r.add_comm, r.neg_add]
 
+lemma add_mul (a b c: α): (a + b)*c = a*c + b*c := Ring.right_distrib α a b c
+lemma mul_add (a b c: α): c*(a + b) = c*a + c*b := Ring.left_distrib α a b c
+
 def to_AdditiveAbelianGroup {α: Type} (r: Ring α): AdditiveAbelianGroup α :=
 {
     assoc := r.add_assoc,
@@ -313,7 +316,15 @@ def add (a b : {x: α // p x}): {x: α // p x} := ⟨a.val + b.val,(sr.cu_add) a
 def mul (a b : {x: α // p x}): {x: α // p x} := ⟨a.val * b.val, (sr.cu_mul) a.val b.val a.property b.property⟩
 def neg (a : {x: α // p x}): {x: α // p x} := ⟨-a.val, (sr.cu_neg) a.val a.property⟩
 def zero : {x: α // p x} := ⟨(0 : α), sr.inc_zero⟩
-def is_set: decidable_eq {x: α // p x} := assume ⟨a, ha⟩ ⟨b, hb⟩, if h: a = b then is_true (subtype.eq h) else is_false (assume hc: (⟨a, ha⟩: {x:α // p x}) = ⟨b, hb⟩, absurd (by injection hc) h)
+def is_set: ExcludedMiddle {x: α // p x} :=
+    assume ⟨a, ha⟩ ⟨b, hb⟩,
+    or.elim (Ring.is_set α a b) (
+        assume h: a = b,
+        or.intro_left _ (subtype.eq h)
+    ) (
+        assume h: a ≠ b,
+        or.intro_right _ (assume hc: (⟨a, ha⟩: {x:α // p x}) = ⟨b, hb⟩, absurd (by injection hc) h)
+    )
 
 lemma add_sr (a b : {x: α // p x}): (sr.add a b).val = a.val + b.val := let ⟨a, ha⟩ := a in (let ⟨b, hb⟩ := b in (rfl))
 lemma mul_sr (a b : {x: α // p x}): (sr.mul a b).val = a.val * b.val := let ⟨a, ha⟩ := a in (let ⟨b, hb⟩ := b in (rfl))
@@ -322,7 +333,6 @@ instance SubRingHasAdd {α: Type} [r: Ring α] {p : α → Prop} [sr: SubRing r 
 instance SubRingHasMul {α: Type} [r: Ring α] {p : α → Prop} [sr: SubRing r p]: has_mul {x: α // p x} := ⟨sr.mul⟩
 instance SubRingHasZero {α: Type} [r: Ring α] {p : α → Prop} [sr: SubRing r p]: has_zero {x: α // p x} := ⟨sr.zero⟩
 instance SubRingHasNeg {α: Type} [r: Ring α] {p : α → Prop} [sr: SubRing r p]: has_neg {x: α // p x} := ⟨sr.neg⟩
-instance SubRingDecidableEq {α: Type} [r: Ring α] {p : α → Prop} [sr: SubRing r p]: decidable_eq {x: α // p x} := sr.is_set
 
 lemma add_assoc: Associative sr.add := assume a b c : {x: α // p x}, suffices (sr.add (sr.add a b) c).val = (sr.add a (sr.add b c)).val, from subtype.eq this, by rw [sr.add_sr, sr.add_sr, r.add_assoc, ←sr.add_sr, ←sr.add_sr]
 lemma add_comm: Commutative sr.add := assume a b : {x: α // p x}, suffices (sr.add a b).val = (sr.add b a).val, from subtype.eq this, by rw [sr.add_sr, r.add_comm, ←sr.add_sr]
@@ -390,14 +400,14 @@ variable {α: Type}
 variable (ur: UnitRing α)
 include ur
 
-lemma one_mul {a: α}: 1*a = a := UnitRing.left_one α a
-lemma mul_one {a: α}: a*1 = a := UnitRing.right_one α a
+lemma one_mul (a: α): 1*a = a := UnitRing.left_one α a
+lemma mul_one (a: α): a*1 = a := UnitRing.right_one α a
 
-lemma neg_one_mul {a : α}: -1 * a = -a :=
+lemma neg_one_mul (a : α): -1 * a = -a :=
 calc
     -1 * a = -(1*a)  : by rw ur.to_Ring.neg_mul
     ...    = -a      : by rw ur.one_mul
-lemma mul_neg_one {a : α}: a*(-1) = -a :=
+lemma mul_neg_one (a : α): a*(-1) = -a :=
 calc
     a * -1 = -(a*1)  : by rw ur.to_Ring.mul_neg
     ...    = -a      : by rw ur.mul_one

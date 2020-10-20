@@ -1,4 +1,5 @@
 import .natural
+import .ring
 
 -- So having constructed the natural numbers I'm now going to construct the integers
 inductive integer: Type
@@ -1304,6 +1305,32 @@ end
 
 lemma nz_mult_nz_nz {x y: 𝐙}: x ≠ 0 → y ≠ 0 → x*y ≠ 0 := assume hx: x ≠ 0, assume hy: y ≠ 0, assume hc: x*y = 0, absurd (mult_nz_eq_z_imp_z hc hy) hx
 
+
+-- All of this induces a Ring structure on 𝐙, and furthermore 𝐙 is an Integral Domain
+
+def to_IntegralDomain: IntegralDomain 𝐙 :=
+{
+    is_set := assume a b, if h: a = b then or.intro_left _ h else or.intro_right _ h,
+    add_assoc := add_asoc,
+    add_comm := add_com,
+    left_zero := assume x:𝐙, eq.symm (zero_add_ x),
+    left_neg := assume x:𝐙, by rw [add_com, add_neg],
+    mul_assoc := assume x y z, eq.symm (mul_asoc x y z),
+    mul_comm := mul_com,
+    left_distrib := assume x y z, by rw [mul_com, add_mult, mul_com x, mul_com y],
+    left_one := one_mult,
+    nzd := assume a b, assume h : a * b = 0, assume ha: a ≠ 0, if hb: b = 0 then hb else absurd h (nz_mult_nz_nz ha hb)
+}
+instance: IntegralDomain 𝐙 := to_IntegralDomain
+def to_CommNZDRing: CommNZDRing 𝐙 := integer.to_IntegralDomain.to_CommNZDRing
+instance: CommNZDRing 𝐙 := to_CommNZDRing
+def to_UnitRing: UnitRing 𝐙 := integer.to_IntegralDomain.to_UnitRing
+instance: UnitRing 𝐙 := to_UnitRing
+def to_NZDRing: NZDRing 𝐙 := integer.to_IntegralDomain.to_NZDRing
+instance: NZDRing 𝐙 := to_NZDRing
+def to_Ring: Ring 𝐙 := integer.to_IntegralDomain.to_Ring
+instance: Ring 𝐙 := to_Ring
+
 -- divisibility
 
 def dvd (x y: 𝐙):= ∃ z: 𝐙, x*z = y
@@ -1428,5 +1455,12 @@ else
             sgn (x*from_natural y) = 1     : by rw iff.elim_left sgn_pos h
             ...                    = sgn x : by rw iff.elim_left sgn_pos hx
     )
+
+lemma sgn_mult_sgn {x : 𝐙}: x ≠ 0 → sgn x * sgn x = 1 :=
+match x with
+| from_natural (a+1) := assume _, show (1:𝐙) * (1:𝐙) = (1:𝐙), from mult_one 1
+| from_natural 0     := assume h, absurd (rfl) h
+| -[a+1]             := assume _, show (-1 * -1 : 𝐙) = 1, by rw [neg_mult_neg, mult_one]
+end
 
 end integer
